@@ -1,20 +1,22 @@
 package com.sylvain.chess.ui;
 
 import com.sylvain.chess.board.ChessBoard;
+import com.sylvain.chess.board.Square;
+import com.sylvain.chess.pieces.PieceOnBoard;
+import com.sylvain.chess.play.Gameplay;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Objects;
+import java.util.Scanner;
 
 public class BoardFrame extends JFrame implements ActionListener {
   private static final Color SELECTED_COLOR = Color.BLUE;
   private static final int DEFAULT_SIZE = 600;
 
-  private final JButton[][] squares = new JButton[8][8];
-  private final JPanel boardPanel = new JPanel();
-  private final JPanel infoPanel = new JPanel();
+  private final SquareButton[][] squares = new SquareButton[8][8];
+  private Gameplay game;
 
   public BoardFrame() {
     // 1. Set up the JFrame
@@ -26,13 +28,28 @@ public class BoardFrame extends JFrame implements ActionListener {
     this.getContentPane().setLayout(new GridLayout(1, 2));
 
     // 2. Use JPanel with GridLayout
-    this.boardPanel.setLayout(new GridLayout(ChessBoard.BOARD_ROWS, ChessBoard.BOARD_COLS));
-    this.add(this.boardPanel); // Add the panel to the frame's content pane
-    final JButton newGameButton = new JButton();
-    newGameButton.setText("New Game");
-    newGameButton.addActionListener(e -> System.out.println("Listener: Button was clicked!"));
-    this.infoPanel.add(newGameButton);
-    this.add(this.infoPanel);
+    final JPanel boardPanel = new JPanel();
+    boardPanel.setLayout(new GridLayout(ChessBoard.BOARD_ROWS, ChessBoard.BOARD_COLS));
+    this.add(boardPanel); // Add the panel to the frame's content pane
+    final JPanel interactivePanel = new JPanel();
+    interactivePanel.setLayout(new BorderLayout());
+    final JPanel genericPanel = new JPanel();
+    genericPanel.add(this.getNewGameButton());
+    final JPanel movePanel = new JPanel(new FlowLayout());
+    final JTextField moveField = new JTextField(5);
+    final JButton submitButton = new JButton("Submit move");
+    final Scanner scanner = new Scanner(moveField.getText());
+    submitButton.addActionListener(e -> {
+      final String value = scanner.next();
+      System.out.println("Move entered: " + value);
+    });
+    movePanel.add(moveField);
+    movePanel.add(submitButton);
+    final JPanel infoPanel = new JPanel();
+    interactivePanel.add(genericPanel, BorderLayout.NORTH);
+    interactivePanel.add(movePanel, BorderLayout.CENTER);
+    interactivePanel.add(infoPanel, BorderLayout.SOUTH);
+    this.add(interactivePanel);
 
     // 3. Create and add JButtons in nested loops
     for (int row = 0; row < 8; row++) {
@@ -43,13 +60,34 @@ public class BoardFrame extends JFrame implements ActionListener {
         this.squares[row][col] = square;
         // Optional: Store location data in the button for later reference
         // square.putClientProperty("location", new Point(row, col));
-        this.boardPanel.add(square);
+        boardPanel.add(square);
       }
     }
-
-    // 4. Example of piece
-    this.squares[0][0].setIcon(new javax.swing.ImageIcon(Objects.requireNonNull(getClass().getResource("/pieces_png/Chess_rdt60.png"))));
     this.setVisible(true);
+  }
+
+  private JButton getNewGameButton() {
+    final JButton newGameButton = new JButton();
+    newGameButton.setText("New Game");
+    newGameButton.addActionListener(
+      e -> {
+        this.game = new Gameplay(ChessBoard.defaultBoard()); // TODO: generalize
+        this.updateBoard();
+        //this.game.playGame();
+      });
+    return newGameButton;
+  }
+
+  private void updateBoard() {
+    for (int row = 0; row < 8; row++) {
+      for (int col = 0; col < 8; col++) {
+        final SquareButton square = this.squares[row][col];
+        square.setBackground(square.getDefaultColor());
+        final PieceOnBoard piece = this.game.getBoard().getPieceAt(new Square(col + 1, ChessBoard.BOARD_ROWS - row));
+        if (piece != null)
+          square.setIcon(piece.getIcon(piece.getColor()));
+      }
+    }
   }
 
   @Override
