@@ -60,6 +60,11 @@ public class BoardFrame extends JFrame implements ActionListener {
       }
       this.latch.countDown();
       this.moveField.setText("");
+      try {
+        Thread.sleep(10);
+      } catch (InterruptedException ex) {
+        throw new RuntimeException(ex);
+      }
       this.updateBoard();
     });
     movePanel.add(this.moveField);
