@@ -1,15 +1,18 @@
 package com.sylvain.chess.ui;
 
+import com.sylvain.chess.PlayerColor;
 import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.board.Square;
 import com.sylvain.chess.pieces.PieceOnBoard;
+import com.sylvain.chess.play.GameStatus;
 import com.sylvain.chess.play.Gameplay;
+import com.sylvain.chess.play.players.interactive.GuiPlayer;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Scanner;
+import java.util.List;
 
 public class BoardFrame extends JFrame implements ActionListener {
   private static final Color SELECTED_COLOR = Color.BLUE;
@@ -17,6 +20,8 @@ public class BoardFrame extends JFrame implements ActionListener {
 
   private final SquareButton[][] squares = new SquareButton[8][8];
   private Gameplay game;
+  private final JTextField moveField;
+  private final JButton submitButton;
 
   public BoardFrame() {
     // 1. Set up the JFrame
@@ -36,15 +41,11 @@ public class BoardFrame extends JFrame implements ActionListener {
     final JPanel genericPanel = new JPanel();
     genericPanel.add(this.getNewGameButton());
     final JPanel movePanel = new JPanel(new FlowLayout());
-    final JTextField moveField = new JTextField(5);
-    final JButton submitButton = new JButton("Submit move");
-    final Scanner scanner = new Scanner(moveField.getText());
-    submitButton.addActionListener(e -> {
-      final String value = scanner.next();
-      System.out.println("Move entered: " + value);
-    });
-    movePanel.add(moveField);
-    movePanel.add(submitButton);
+    this.moveField = new JTextField(5);
+    this.submitButton = new JButton("Submit move");
+    this.submitButton.addActionListener(e -> this.updateBoard());
+    movePanel.add(this.moveField);
+    movePanel.add(this.submitButton);
     final JPanel infoPanel = new JPanel();
     interactivePanel.add(genericPanel, BorderLayout.NORTH);
     interactivePanel.add(movePanel, BorderLayout.CENTER);
@@ -71,9 +72,21 @@ public class BoardFrame extends JFrame implements ActionListener {
     newGameButton.setText("New Game");
     newGameButton.addActionListener(
       e -> {
-        this.game = new Gameplay(ChessBoard.defaultBoard()); // TODO: generalize
+        final ChessBoard board = ChessBoard.defaultBoard();
+        this.game = new Gameplay(board); // TODO: generalize
         this.updateBoard();
-        //this.game.playGame();
+        new SwingWorker<Void, Void>() {
+          @Override
+          protected Void doInBackground() {
+            final GameStatus result = game.playGame(List.of(new GuiPlayer(PlayerColor.WHITE, "white", board, moveField, submitButton),
+                    new GuiPlayer(PlayerColor.BLACK, "black", board, moveField, submitButton)));
+            return null;
+          }
+          @Override
+          protected void done() {
+            System.out.println("Done!");
+          }
+        }.execute();
       });
     return newGameButton;
   }
@@ -84,8 +97,7 @@ public class BoardFrame extends JFrame implements ActionListener {
         final SquareButton square = this.squares[row][col];
         square.setBackground(square.getDefaultColor());
         final PieceOnBoard piece = this.game.getBoard().getPieceAt(new Square(col + 1, ChessBoard.BOARD_ROWS - row));
-        if (piece != null)
-          square.setIcon(piece.getIcon(piece.getColor()));
+        square.setIcon(piece == null ? null : piece.getIcon(piece.getColor()));
       }
     }
   }
@@ -95,6 +107,7 @@ public class BoardFrame extends JFrame implements ActionListener {
     final SquareButton clickedButton = (SquareButton) e.getSource();
     // Example action: change the color of the clicked button
     clickedButton.setBackground(clickedButton.getBackground().equals(SELECTED_COLOR) ? clickedButton.getDefaultColor() : SELECTED_COLOR);
+    this.updateBoard();
   }
 
   public static void main(String[] args) {
