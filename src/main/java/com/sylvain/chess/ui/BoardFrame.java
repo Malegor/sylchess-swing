@@ -4,30 +4,35 @@ import com.sylvain.chess.PlayerColor;
 import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.board.Square;
 import com.sylvain.chess.pieces.PieceOnBoard;
-import com.sylvain.chess.play.GameStatus;
 import com.sylvain.chess.play.Gameplay;
 import com.sylvain.chess.play.players.Player;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-public class BoardFrame extends JFrame implements ActionListener {
+public class BoardFrame extends JFrame {
   private static final Color SELECTED_COLOR = Color.BLUE;
   private static final int DEFAULT_SIZE = 600;
 
-  private final SquareButton[][] squares = new SquareButton[8][8];
-  private Gameplay game;
+  private final SquareButton[][] squares;
   private final JTextField moveField;
+  @Getter
+  private final JLabel warningsLabel;
+  @Getter
+  private final DefaultTableModel movesTableModel;
+  private final JLabel resultLabel;
+  private Gameplay game;
   private List<Player> players;
+  private Player playersTurn;
+  private int moveNumber;
   @Getter @Setter
-  private CountDownLatch latch;
+  private CountDownLatch moveLatch;
 
   public BoardFrame() {
     // 1. Set up the JFrame
@@ -35,59 +40,115 @@ public class BoardFrame extends JFrame implements ActionListener {
     this.setSize(2 * DEFAULT_SIZE, DEFAULT_SIZE);
     this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     this.setResizable(true);
-    // Set the layout manager for the frame's content pane : GridLayout(1, 2) specifies 1 row and 2 columns
     this.getContentPane().setLayout(new GridLayout(1, 2));
-
+    this.warningsLabel = new JLabel();
+    this.movesTableModel = new DefaultTableModel(new String[]{"Move #", "White", "Black"}, 0) {
+      @Override
+      public boolean isCellEditable(int row, int column) {
+        return false;
+      }
+    };
+    this.resultLabel = new JLabel();
+    this.moveField = new JTextField(5);
+    this.players = new ArrayList<>(2);
+    this.moveLatch = new CountDownLatch(1); // OBS: unnecessary?
+    this.squares = new SquareButton[8][8];
     // 2. Use JPanel with GridLayout
+    this.add(this.getBoardPanel());
+    this.add(this.getInteractivePanel());
+    this.setVisible(true);
+  }
+
+  public void clearTable() {
+    this.movesTableModel.setRowCount(0);
+  }
+
+  private JPanel getInteractivePanel() {
+    final JPanel interactivePanel = new JPanel(new BorderLayout());
+    final JPanel newGamePanel = this.getNewGamePanel();
+    final JPanel submitMovePanel = this.getSubmitMovePanel();
+    submitMovePanel.setBorder(BorderFactory.createLineBorder(Color.black));
+    final JPanel infoPanel = this.getInfoPanel();
+    interactivePanel.add(newGamePanel, BorderLayout.NORTH);
+    interactivePanel.add(submitMovePanel, BorderLayout.CENTER);
+    interactivePanel.add(infoPanel, BorderLayout.SOUTH);
+    return interactivePanel;
+  }
+
+  private JPanel getBoardPanel() {
     final JPanel boardPanel = new JPanel();
     boardPanel.setLayout(new GridLayout(ChessBoard.BOARD_ROWS, ChessBoard.BOARD_COLS));
-    this.add(boardPanel); // Add the panel to the frame's content pane
-    final JPanel interactivePanel = new JPanel();
-    interactivePanel.setLayout(new BorderLayout());
-    final JPanel genericPanel = new JPanel();
-    genericPanel.add(this.getNewGameButton());
-    final JPanel movePanel = new JPanel(new FlowLayout());
-    this.moveField = new JTextField(5);
-    final JButton submitButton = new JButton("Submit move");
-    this.players = new ArrayList<>(2);
-    this.latch = new CountDownLatch(1);
-    submitButton.addActionListener(e -> {
-      final String move = this.moveField.getText();
-      for (final Player player : this.players) {
-        if (player instanceof GuiPlayer guiPlayer) {
-          guiPlayer.setMove(move);
-        }
-      }
-      this.latch.countDown();
-      this.moveField.setText("");
-      try {
-        Thread.sleep(10);
-      } catch (InterruptedException ex) {
-        throw new RuntimeException(ex);
-      }
-      this.updateBoard();
-    });
-    movePanel.add(this.moveField);
-    movePanel.add(submitButton);
-    final JPanel infoPanel = new JPanel();
-    interactivePanel.add(genericPanel, BorderLayout.NORTH);
-    interactivePanel.add(movePanel, BorderLayout.CENTER);
-    interactivePanel.add(infoPanel, BorderLayout.SOUTH);
-    this.add(interactivePanel);
-
-    // 3. Create and add JButtons in nested loops
     for (int row = 0; row < 8; row++) {
       for (int col = 0; col < 8; col++) {
         final SquareButton square = new SquareButton(row, col);
         square.setBackground(square.getDefaultColor());
-        square.addActionListener(this);
+        square.addActionListener(e -> {
+          this.updatePiecesOnBoard();
+          final SquareButton clickedButton = (SquareButton) e.getSource();
+          // Example action: change the color of the clicked button
+          clickedButton.setBackground(clickedButton.getBackground().equals(SELECTED_COLOR) ? clickedButton.getDefaultColor() : SELECTED_COLOR);
+        });
         this.squares[row][col] = square;
         // Optional: Store location data in the button for later reference
         // square.putClientProperty("location", new Point(row, col));
         boardPanel.add(square);
       }
     }
-    this.setVisible(true);
+    return boardPanel;
+  }
+
+  private JPanel getInfoPanel() {
+    final JPanel infoPanel = new JPanel(new GridBagLayout());
+    infoPanel.setBorder(BorderFactory.createLineBorder(Color.black));
+    this.warningsLabel.setForeground(Color.RED);
+    final Font currentFontWarning = this.warningsLabel.getFont();
+    this.warningsLabel.setFont(currentFontWarning.deriveFont(currentFontWarning.getSize() * 1.5f));
+    this.warningsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    this.warningsLabel.setVerticalAlignment(SwingConstants.NORTH);
+    final JTable movesTable = new JTable(this.movesTableModel);
+    final JScrollPane scrollPane = new JScrollPane(movesTable);
+    this.resultLabel.setForeground(Color.GREEN);
+    final Font currentFontResult = this.resultLabel.getFont();
+    this.resultLabel.setFont(currentFontResult.deriveFont(currentFontResult.getSize() * 6f));
+    this.resultLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    this.resultLabel.setVerticalAlignment(SwingConstants.NORTH);
+    infoPanel.add(this.warningsLabel);
+    infoPanel.add(scrollPane);
+    //infoPanel.add(movesTable);
+    infoPanel.add(this.resultLabel);
+    return infoPanel;
+  }
+
+  private JPanel getSubmitMovePanel() {
+    final JPanel submitMovePanel = new JPanel(new FlowLayout());
+    final JButton submitButton = new JButton("Submit move");
+    submitButton.addActionListener(e -> {
+      final String move = this.moveField.getText();
+      for (final Player player : this.players) {
+        if (player instanceof GuiPlayer guiPlayer) {
+          // OBS: in case of two GUI players, both of them will have this move set, even if only one of them will actually play it.
+          // This could be improved by keeping track of which player has the next move.
+          guiPlayer.setMove(move);
+        }
+      }
+      this.moveLatch.countDown();
+      this.moveField.setText("");
+      try {
+        Thread.sleep(25);
+      } catch (InterruptedException ex) {
+        throw new RuntimeException(ex);
+      }
+      this.updatePiecesOnBoard();
+    });
+    submitMovePanel.add(this.moveField);
+    submitMovePanel.add(submitButton);
+    return submitMovePanel;
+  }
+
+  private JPanel getNewGamePanel() {
+    final JPanel newGamePanel = new JPanel(new FlowLayout());
+    newGamePanel.add(this.getNewGameButton());
+    return newGamePanel;
   }
 
   private JButton getNewGameButton() {
@@ -97,45 +158,61 @@ public class BoardFrame extends JFrame implements ActionListener {
       e -> {
         final ChessBoard board = ChessBoard.defaultBoard();
         this.game = new Gameplay(board); // TODO: generalize
-        this.updateBoard();
+        this.updatePiecesOnBoard();
+        System.out.println("New game");
+        players = List.of(new GuiPlayer(PlayerColor.WHITE, "White", board, BoardFrame.this),
+                new GuiPlayer(PlayerColor.BLACK, "Black", board, BoardFrame.this));
+        playersTurn = players.getFirst();
+        resultLabel.setText("");
+        BoardFrame.this.clearTable();
+        warningsLabel.setText("");
+        moveLatch = new CountDownLatch(1);
+        moveNumber = game.getMoveNumber();
+        movesTableModel.setColumnIdentifiers(new Object[]{movesTableModel.getColumnName(0), players.getFirst(), players.getLast()});
         new SwingWorker<Void, Void>() {
           @Override
           protected Void doInBackground() {
-            players = List.of(new GuiPlayer(PlayerColor.WHITE, "white", board, BoardFrame.this),
-                    new GuiPlayer(PlayerColor.BLACK, "black", board, BoardFrame.this));
-            final GameStatus result = game.playGame(players);
+            game.playGame(players);
+            resultLabel.setText(game.getEndGame().getPgn());
             return null;
           }
           @Override
           protected void done() {
-            System.out.println("Done!");
+            System.out.println("Game over: " + resultLabel.getText());
           }
         }.execute();
       });
     return newGameButton;
   }
 
-  private void updateBoard() {
+  private void updatePiecesOnBoard() {
     for (int row = 0; row < 8; row++) {
       for (int col = 0; col < 8; col++) {
         final SquareButton square = this.squares[row][col];
-        square.setBackground(square.getDefaultColor());
-        final PieceOnBoard piece = this.game.getBoard().getPieceAt(new Square(col + 1, ChessBoard.BOARD_ROWS - row));
+        //square.setBackground(square.getDefaultColor());
+        final PieceOnBoard piece = this.game == null ? null : this.game.getBoard().getPieceAt(new Square(col + 1, ChessBoard.BOARD_ROWS - row));
         square.setIcon(piece == null ? null : piece.getIcon(piece.getColor()));
       }
     }
   }
 
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    final SquareButton clickedButton = (SquareButton) e.getSource();
-    // Example action: change the color of the clicked button
-    clickedButton.setBackground(clickedButton.getBackground().equals(SELECTED_COLOR) ? clickedButton.getDefaultColor() : SELECTED_COLOR);
-    this.updateBoard();
-  }
-
   public static void main(String[] args) {
     // Ensure GUI creation happens on the Event Dispatch Thread (EDT)
     SwingUtilities.invokeLater(BoardFrame::new);
+  }
+
+  public void applyMove(final String moveStr) {
+    if (this.playersTurn.getColor().equals(PlayerColor.WHITE)) {
+      this.movesTableModel.addRow(new Object[]{moveNumber, moveStr, ""});
+    }
+    else if (this.movesTableModel.getRowCount() == 0) {
+      this.movesTableModel.addRow(new Object[]{moveNumber, "...", moveStr});
+      moveNumber++;
+    }
+    else {
+      this.movesTableModel.setValueAt(moveStr, this.movesTableModel.getRowCount() - 1, this.movesTableModel.getColumnCount() - 1);
+      moveNumber++;
+    }
+    this.playersTurn = this.players.getFirst().equals(this.playersTurn) ? this.players.getLast() : this.players.getFirst();
   }
 }
