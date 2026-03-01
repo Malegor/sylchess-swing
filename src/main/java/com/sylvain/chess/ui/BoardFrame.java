@@ -3,6 +3,7 @@ package com.sylvain.chess.ui;
 import com.sylvain.chess.PlayerColor;
 import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.board.Square;
+import com.sylvain.chess.io.fen.FenLoader;
 import com.sylvain.chess.pieces.PieceOnBoard;
 import com.sylvain.chess.play.Gameplay;
 import com.sylvain.chess.play.players.Player;
@@ -19,6 +20,7 @@ import java.util.concurrent.CountDownLatch;
 public class BoardFrame extends JFrame {
   private static final Color SELECTED_COLOR = Color.BLUE;
   private static final int DEFAULT_SIZE = 600;
+  public static final String FEN_MODE = "Load FEN description:";
 
   private final SquareButton[][] squares;
   private final JTextField moveField;
@@ -27,6 +29,9 @@ public class BoardFrame extends JFrame {
   @Getter
   private final DefaultTableModel movesTableModel;
   private final JLabel resultLabel;
+  private final JComboBox<String> selectNewGameMode;
+  private final JTextField fenDescription;
+
   private Gameplay game;
   private List<Player> players;
   private Player playersTurn;
@@ -50,6 +55,9 @@ public class BoardFrame extends JFrame {
     };
     this.resultLabel = new JLabel();
     this.moveField = new JTextField(5);
+    this.selectNewGameMode = new JComboBox<>(new String[]{"Classical game", "Chess 960 (TODO)", FEN_MODE});
+    this.fenDescription = new JTextField(25);
+
     this.players = new ArrayList<>(2);
     this.moveLatch = new CountDownLatch(1); // OBS: unnecessary?
     this.squares = new SquareButton[8][8];
@@ -147,6 +155,8 @@ public class BoardFrame extends JFrame {
 
   private JPanel getNewGamePanel() {
     final JPanel newGamePanel = new JPanel(new FlowLayout());
+    newGamePanel.add(this.selectNewGameMode);
+    newGamePanel.add(this.fenDescription);
     newGamePanel.add(this.getNewGameButton());
     return newGamePanel;
   }
@@ -156,19 +166,22 @@ public class BoardFrame extends JFrame {
     newGameButton.setText("New Game");
     newGameButton.addActionListener(
       e -> {
-        final ChessBoard board = ChessBoard.defaultBoard();
-        this.game = new Gameplay(board); // TODO: generalize
-        this.updatePiecesOnBoard();
         System.out.println("New game");
-        players = List.of(new GuiPlayer(PlayerColor.WHITE, "White", board, BoardFrame.this),
-                new GuiPlayer(PlayerColor.BLACK, "Black", board, BoardFrame.this));
-        playersTurn = players.getFirst();
-        resultLabel.setText("");
+        this.game = this.getGame();
+        this.players = this.getPlayers(this.game.getBoard());
+        for (final Player player : this.players) {
+          if (player.getColor().equals(this.game.getFirstPlayingColor())) {
+            this.playersTurn = player;
+            break;
+          }
+        }
+        this.updatePiecesOnBoard();
+        this.resultLabel.setText("");
         BoardFrame.this.clearTable();
-        warningsLabel.setText("");
-        moveLatch = new CountDownLatch(1);
-        moveNumber = game.getMoveNumber();
-        movesTableModel.setColumnIdentifiers(new Object[]{movesTableModel.getColumnName(0), players.getFirst(), players.getLast()});
+        this.warningsLabel.setText("");
+        this.moveLatch = new CountDownLatch(1);
+        this.moveNumber = game.getMoveNumber();
+        this.movesTableModel.setColumnIdentifiers(new Object[]{this.movesTableModel.getColumnName(0), this.players.getFirst(), this.players.getLast()});
         new SwingWorker<Void, Void>() {
           @Override
           protected Void doInBackground() {
@@ -183,6 +196,21 @@ public class BoardFrame extends JFrame {
         }.execute();
       });
     return newGameButton;
+  }
+
+  private Gameplay getGame() {
+    try {
+      return FEN_MODE.equals(this.selectNewGameMode.getSelectedItem()) ? FenLoader.loadPosition(this.fenDescription.getText()) : new Gameplay(ChessBoard.defaultBoard());
+    }
+    catch (final IllegalArgumentException ex) {
+      this.warningsLabel.setText(ex.getMessage());
+      throw ex;
+    }
+  }
+
+  private List<Player> getPlayers(final ChessBoard board) {
+    return List.of(new GuiPlayer(PlayerColor.WHITE, "White", board, BoardFrame.this),
+            new GuiPlayer(PlayerColor.BLACK, "Black", board, BoardFrame.this));
   }
 
   private void updatePiecesOnBoard() {
