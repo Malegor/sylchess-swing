@@ -34,6 +34,12 @@ public class GuiPlayer extends InteractivePlayer {
   @Override
   protected void handleInvalidMove(List<Move> validMoves, String moveStr) {
     super.handleInvalidMove(validMoves, moveStr);
-    this.frame.getWarningsLabel().setText("Invalid move: " + moveStr);
+    this.frame.getWarningsLabel().setText("Invalid move: \"" + moveStr + "\"");
+  }
+
+  @Override
+  protected void handleValidMove(final String moveStr) {
+    super.handleValidMove(moveStr);
+    this.frame.applyMove(moveStr);
   }
 }

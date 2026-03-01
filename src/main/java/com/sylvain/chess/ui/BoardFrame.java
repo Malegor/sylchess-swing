@@ -4,13 +4,13 @@ import com.sylvain.chess.PlayerColor;
 import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.board.Square;
 import com.sylvain.chess.pieces.PieceOnBoard;
-import com.sylvain.chess.play.GameStatus;
 import com.sylvain.chess.play.Gameplay;
 import com.sylvain.chess.play.players.Player;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +24,13 @@ public class BoardFrame extends JFrame {
   private final JTextField moveField;
   @Getter
   private final JLabel warningsLabel;
+  @Getter
+  private final DefaultTableModel movesTableModel;
+  private final JLabel resultLabel;
   private Gameplay game;
   private List<Player> players;
+  private Player playersTurn;
+  private int moveNumber;
   @Getter @Setter
   private CountDownLatch moveLatch;
 
@@ -34,9 +39,16 @@ public class BoardFrame extends JFrame {
     this.setTitle("Sylchess Board");
     this.setSize(2 * DEFAULT_SIZE, DEFAULT_SIZE);
     this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    this.setResizable(false);
+    this.setResizable(true);
     this.getContentPane().setLayout(new GridLayout(1, 2));
     this.warningsLabel = new JLabel();
+    this.movesTableModel = new DefaultTableModel(new String[]{"Move #", "White", "Black"}, 0) {
+      @Override
+      public boolean isCellEditable(int row, int column) {
+        return false;
+      }
+    };
+    this.resultLabel = new JLabel();
     this.moveField = new JTextField(5);
     this.players = new ArrayList<>(2);
     this.moveLatch = new CountDownLatch(1); // OBS: unnecessary?
@@ -47,14 +59,18 @@ public class BoardFrame extends JFrame {
     this.setVisible(true);
   }
 
+  public void clearTable() {
+    this.movesTableModel.setRowCount(0);
+  }
+
   private JPanel getInteractivePanel() {
-    final JPanel interactivePanel = new JPanel();
-    interactivePanel.setLayout(new BorderLayout());
-    final JPanel genericPanel = this.getGenericPanel();
-    final JPanel movePanel = this.getMovePanel();
+    final JPanel interactivePanel = new JPanel(new BorderLayout());
+    final JPanel newGamePanel = this.getNewGamePanel();
+    final JPanel submitMovePanel = this.getSubmitMovePanel();
+    submitMovePanel.setBorder(BorderFactory.createLineBorder(Color.black));
     final JPanel infoPanel = this.getInfoPanel();
-    interactivePanel.add(genericPanel, BorderLayout.NORTH);
-    interactivePanel.add(movePanel, BorderLayout.CENTER);
+    interactivePanel.add(newGamePanel, BorderLayout.NORTH);
+    interactivePanel.add(submitMovePanel, BorderLayout.CENTER);
     interactivePanel.add(infoPanel, BorderLayout.SOUTH);
     return interactivePanel;
   }
@@ -82,15 +98,29 @@ public class BoardFrame extends JFrame {
   }
 
   private JPanel getInfoPanel() {
-    final JPanel infoPanel = new JPanel();
-    infoPanel.setLayout(new FlowLayout());
+    final JPanel infoPanel = new JPanel(new GridBagLayout());
+    infoPanel.setBorder(BorderFactory.createLineBorder(Color.black));
     this.warningsLabel.setForeground(Color.RED);
-    infoPanel.add(this.warningsLabel, BorderLayout.NORTH);
+    final Font currentFontWarning = this.warningsLabel.getFont();
+    this.warningsLabel.setFont(currentFontWarning.deriveFont(currentFontWarning.getSize() * 1.5f));
+    this.warningsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    this.warningsLabel.setVerticalAlignment(SwingConstants.NORTH);
+    final JTable movesTable = new JTable(this.movesTableModel);
+    final JScrollPane scrollPane = new JScrollPane(movesTable);
+    this.resultLabel.setForeground(Color.GREEN);
+    final Font currentFontResult = this.resultLabel.getFont();
+    this.resultLabel.setFont(currentFontResult.deriveFont(currentFontResult.getSize() * 6f));
+    this.resultLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    this.resultLabel.setVerticalAlignment(SwingConstants.NORTH);
+    infoPanel.add(this.warningsLabel);
+    infoPanel.add(scrollPane);
+    //infoPanel.add(movesTable);
+    infoPanel.add(this.resultLabel);
     return infoPanel;
   }
 
-  private JPanel getMovePanel() {
-    final JPanel movePanel = new JPanel(new FlowLayout());
+  private JPanel getSubmitMovePanel() {
+    final JPanel submitMovePanel = new JPanel(new FlowLayout());
     final JButton submitButton = new JButton("Submit move");
     submitButton.addActionListener(e -> {
       final String move = this.moveField.getText();
@@ -104,21 +134,21 @@ public class BoardFrame extends JFrame {
       this.moveLatch.countDown();
       this.moveField.setText("");
       try {
-        Thread.sleep(20);
+        Thread.sleep(25);
       } catch (InterruptedException ex) {
         throw new RuntimeException(ex);
       }
       this.updatePiecesOnBoard();
     });
-    movePanel.add(this.moveField);
-    movePanel.add(submitButton);
-    return movePanel;
+    submitMovePanel.add(this.moveField);
+    submitMovePanel.add(submitButton);
+    return submitMovePanel;
   }
 
-  private JPanel getGenericPanel() {
-    final JPanel genericPanel = new JPanel();
-    genericPanel.add(this.getNewGameButton());
-    return genericPanel;
+  private JPanel getNewGamePanel() {
+    final JPanel newGamePanel = new JPanel(new FlowLayout());
+    newGamePanel.add(this.getNewGameButton());
+    return newGamePanel;
   }
 
   private JButton getNewGameButton() {
@@ -129,18 +159,26 @@ public class BoardFrame extends JFrame {
         final ChessBoard board = ChessBoard.defaultBoard();
         this.game = new Gameplay(board); // TODO: generalize
         this.updatePiecesOnBoard();
+        System.out.println("New game");
+        players = List.of(new GuiPlayer(PlayerColor.WHITE, "White", board, BoardFrame.this),
+                new GuiPlayer(PlayerColor.BLACK, "Black", board, BoardFrame.this));
+        playersTurn = players.getFirst();
+        resultLabel.setText("");
+        BoardFrame.this.clearTable();
+        warningsLabel.setText("");
+        moveLatch = new CountDownLatch(1);
+        moveNumber = game.getMoveNumber();
+        movesTableModel.setColumnIdentifiers(new Object[]{movesTableModel.getColumnName(0), players.getFirst(), players.getLast()});
         new SwingWorker<Void, Void>() {
           @Override
           protected Void doInBackground() {
-            players = List.of(new GuiPlayer(PlayerColor.WHITE, "white", board, BoardFrame.this),
-                    new GuiPlayer(PlayerColor.BLACK, "black", board, BoardFrame.this));
-            moveLatch = new CountDownLatch(1);
-            final GameStatus result = game.playGame(players);
+            game.playGame(players);
+            resultLabel.setText(game.getEndGame().getPgn());
             return null;
           }
           @Override
           protected void done() {
-            System.out.println("Done!");
+            System.out.println("Game over: " + resultLabel.getText());
           }
         }.execute();
       });
@@ -161,5 +199,20 @@ public class BoardFrame extends JFrame {
   public static void main(String[] args) {
     // Ensure GUI creation happens on the Event Dispatch Thread (EDT)
     SwingUtilities.invokeLater(BoardFrame::new);
+  }
+
+  public void applyMove(final String moveStr) {
+    if (this.playersTurn.getColor().equals(PlayerColor.WHITE)) {
+      this.movesTableModel.addRow(new Object[]{moveNumber, moveStr, ""});
+    }
+    else if (this.movesTableModel.getRowCount() == 0) {
+      this.movesTableModel.addRow(new Object[]{moveNumber, "...", moveStr});
+      moveNumber++;
+    }
+    else {
+      this.movesTableModel.setValueAt(moveStr, this.movesTableModel.getRowCount() - 1, this.movesTableModel.getColumnCount() - 1);
+      moveNumber++;
+    }
+    this.playersTurn = this.players.getFirst().equals(this.playersTurn) ? this.players.getLast() : this.players.getFirst();
   }
 }
