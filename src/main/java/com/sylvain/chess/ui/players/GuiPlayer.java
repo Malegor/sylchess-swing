@@ -1,9 +1,10 @@
-package com.sylvain.chess.ui;
+package com.sylvain.chess.ui.players;
 
 import com.sylvain.chess.PlayerColor;
 import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.moves.Move;
 import com.sylvain.chess.play.players.interactive.InteractivePlayer;
+import com.sylvain.chess.ui.BoardFrame;
 import lombok.Setter;
 
 import java.util.List;
@@ -38,8 +39,8 @@ public class GuiPlayer extends InteractivePlayer {
   }
 
   @Override
-  protected void handleValidMove(final String moveStr) {
-    super.handleValidMove(moveStr);
-    this.frame.applyMove(moveStr);
+  protected void handleValidMove(final Move move) {
+    super.handleValidMove(move);
+    this.frame.applyMove(move);
   }
 }

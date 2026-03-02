@@ -4,9 +4,12 @@ import com.sylvain.chess.PlayerColor;
 import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.board.Square;
 import com.sylvain.chess.io.fen.FenLoader;
+import com.sylvain.chess.moves.Move;
 import com.sylvain.chess.pieces.PieceOnBoard;
 import com.sylvain.chess.play.Gameplay;
 import com.sylvain.chess.play.players.Player;
+import com.sylvain.chess.ui.players.GuiDummyPlayer;
+import com.sylvain.chess.ui.players.GuiPlayer;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -40,7 +43,6 @@ public class BoardFrame extends JFrame {
   private CountDownLatch moveLatch;
 
   public BoardFrame() {
-    // 1. Set up the JFrame
     this.setTitle("Sylchess Board");
     this.setSize(2 * DEFAULT_SIZE, DEFAULT_SIZE);
     this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -61,7 +63,6 @@ public class BoardFrame extends JFrame {
     this.players = new ArrayList<>(2);
     this.moveLatch = new CountDownLatch(1); // OBS: unnecessary?
     this.squares = new SquareButton[8][8];
-    // 2. Use JPanel with GridLayout
     this.add(this.getBoardPanel());
     this.add(this.getInteractivePanel());
     this.setVisible(true);
@@ -122,7 +123,6 @@ public class BoardFrame extends JFrame {
     this.resultLabel.setVerticalAlignment(SwingConstants.NORTH);
     infoPanel.add(this.warningsLabel);
     infoPanel.add(scrollPane);
-    //infoPanel.add(movesTable);
     infoPanel.add(this.resultLabel);
     return infoPanel;
   }
@@ -141,12 +141,6 @@ public class BoardFrame extends JFrame {
       }
       this.moveLatch.countDown();
       this.moveField.setText("");
-      try {
-        Thread.sleep(25);
-      } catch (InterruptedException ex) {
-        throw new RuntimeException(ex);
-      }
-      this.updatePiecesOnBoard();
     });
     submitMovePanel.add(this.moveField);
     submitMovePanel.add(submitButton);
@@ -209,8 +203,9 @@ public class BoardFrame extends JFrame {
   }
 
   private List<Player> getPlayers(final ChessBoard board) {
-    return List.of(new GuiPlayer(PlayerColor.WHITE, "White", board, BoardFrame.this),
-            new GuiPlayer(PlayerColor.BLACK, "Black", board, BoardFrame.this));
+    return List.of(new GuiDummyPlayer(PlayerColor.WHITE, board, this), new GuiDummyPlayer(PlayerColor.BLACK, board, this));
+//    return List.of(new GuiPlayer(PlayerColor.WHITE, "White", board, BoardFrame.this),
+//            new GuiPlayer(PlayerColor.BLACK, "Black", board, BoardFrame.this));
   }
 
   private void updatePiecesOnBoard() {
@@ -229,7 +224,8 @@ public class BoardFrame extends JFrame {
     SwingUtilities.invokeLater(BoardFrame::new);
   }
 
-  public void applyMove(final String moveStr) {
+  public void applyMove(final Move move) {
+    final String moveStr = move.toPgn();
     if (this.playersTurn.getColor().equals(PlayerColor.WHITE)) {
       this.movesTableModel.addRow(new Object[]{moveNumber, moveStr, ""});
     }
@@ -242,5 +238,6 @@ public class BoardFrame extends JFrame {
       moveNumber++;
     }
     this.playersTurn = this.players.getFirst().equals(this.playersTurn) ? this.players.getLast() : this.players.getFirst();
+    this.updatePiecesOnBoard();
   }
 }
