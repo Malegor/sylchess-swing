@@ -10,12 +10,12 @@ import lombok.Setter;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-public class GuiPlayer extends InteractivePlayer {
+public class GuiInteractivePlayer extends InteractivePlayer {
   private final BoardFrame frame;
   @Setter
   private String move;
 
-  public GuiPlayer(final PlayerColor color, final String name, final ChessBoard board, final BoardFrame frame) {
+  public GuiInteractivePlayer(final PlayerColor color, final String name, final ChessBoard board, final BoardFrame frame) {
     super(color, name, board);
     this.frame = frame;
   }
@@ -28,7 +28,7 @@ public class GuiPlayer extends InteractivePlayer {
       Thread.currentThread().interrupt();
     }
     this.frame.setMoveLatch(new CountDownLatch(1));
-    this.frame.getWarningsLabel().setText("");
+    this.frame.getWarningsLabel().setText(" ");
     return this.move;
   }
 
