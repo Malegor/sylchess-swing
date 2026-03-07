@@ -1,20 +1,21 @@
-package com.sylvain.chess.ui;
+package com.sylvain.chess.ui.players;
 
 import com.sylvain.chess.PlayerColor;
 import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.moves.Move;
 import com.sylvain.chess.play.players.interactive.InteractivePlayer;
+import com.sylvain.chess.ui.BoardFrame;
 import lombok.Setter;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-public class GuiPlayer extends InteractivePlayer {
+public class GuiInteractivePlayer extends InteractivePlayer {
   private final BoardFrame frame;
   @Setter
   private String move;
 
-  public GuiPlayer(final PlayerColor color, final String name, final ChessBoard board, final BoardFrame frame) {
+  public GuiInteractivePlayer(final PlayerColor color, final String name, final ChessBoard board, final BoardFrame frame) {
     super(color, name, board);
     this.frame = frame;
   }
@@ -27,7 +28,7 @@ public class GuiPlayer extends InteractivePlayer {
       Thread.currentThread().interrupt();
     }
     this.frame.setMoveLatch(new CountDownLatch(1));
-    this.frame.getWarningsLabel().setText("");
+    this.frame.getWarningsLabel().setText(" ");
     return this.move;
   }
 
@@ -38,8 +39,8 @@ public class GuiPlayer extends InteractivePlayer {
   }
 
   @Override
-  protected void handleValidMove(final String moveStr) {
-    super.handleValidMove(moveStr);
-    this.frame.applyMove(moveStr);
+  protected void handleValidMove(final Move move) {
+    super.handleValidMove(move);
+    this.frame.applyMove(move);
   }
 }
