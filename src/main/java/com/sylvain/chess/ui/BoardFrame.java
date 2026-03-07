@@ -13,6 +13,7 @@ import com.sylvain.chess.ui.players.GuiInteractivePlayer;
 import com.sylvain.chess.ui.players.GuiMateSolver;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+@Log4j2
 public class BoardFrame extends JFrame {
   private static final Color SELECTED_COLOR = Color.BLUE;
   private static final int DEFAULT_SIZE = 600;
@@ -102,7 +104,6 @@ public class BoardFrame extends JFrame {
         final SquareButton square = new SquareButton(row, col);
         square.setBackground(square.getDefaultColor());
         square.addActionListener(e -> {
-          //this.updatePiecesOnBoard();
           final SquareButton clickedButton = (SquareButton) e.getSource();
           // Example action: change the color of the clicked button
           clickedButton.setBackground(clickedButton.getBackground().equals(SELECTED_COLOR) ? clickedButton.getDefaultColor() : SELECTED_COLOR);
@@ -177,8 +178,9 @@ public class BoardFrame extends JFrame {
     newGameButton.setText("New Game");
     newGameButton.addActionListener(
       e -> {
-        System.out.println("New Game");
+        log.info("New Game");
         this.game = this.getGame();
+        this.game.getBoard().printBoard();
         this.players = this.getSelectedPlayers(this.game.getBoard());
         for (final Player player : this.players) {
           if (player.getColor().equals(this.game.getFirstPlayingColor())) {
@@ -202,7 +204,7 @@ public class BoardFrame extends JFrame {
           }
           @Override
           protected void done() {
-            System.out.println("Game over: " + resultLabel.getText());
+            log.info("Game over: {}", resultLabel.getText());
           }
         }.execute();
       });
