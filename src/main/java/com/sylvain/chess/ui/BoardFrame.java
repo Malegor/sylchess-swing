@@ -25,7 +25,6 @@ import java.util.concurrent.CountDownLatch;
 
 @Log4j2
 public class BoardFrame extends JFrame {
-  private static final Color SELECTED_COLOR = Color.BLUE;
   private static final int DEFAULT_SIZE = 600;
   private static final String FEN_MODE = "Load FEN description:";
   private static final String HUMAN_PLAYER = "Human player";
@@ -102,12 +101,6 @@ public class BoardFrame extends JFrame {
     for (int row = 0; row < 8; row++) {
       for (int col = 0; col < 8; col++) {
         final SquareButton square = new SquareButton(row, col);
-        square.setBackground(square.getDefaultColor());
-        square.addActionListener(e -> {
-          final SquareButton clickedButton = (SquareButton) e.getSource();
-          // Example action: change the color of the clicked button
-          clickedButton.setBackground(clickedButton.getBackground().equals(SELECTED_COLOR) ? clickedButton.getDefaultColor() : SELECTED_COLOR);
-        });
         this.squares[row][col] = square;
         // Optional: Store location data in the button for later reference
         // square.putClientProperty("location", new Point(row, col));
