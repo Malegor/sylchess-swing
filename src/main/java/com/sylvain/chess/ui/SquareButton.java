@@ -15,6 +15,7 @@ public class SquareButton extends JButton implements MouseListener {
   private static final Color LIGHT_SQUARE_COLOR = Color.LIGHT_GRAY;
   private static final Color DARK_SQUARE_COLOR = Color.DARK_GRAY;
   private static final Color SELECTED_COLOR = Color.BLUE;
+  private static final Color SELECTED_MOVE_COLOR = Color.RED;
   @Serial
   private static final long serialVersionUID = 1L;
 
@@ -38,6 +39,7 @@ public class SquareButton extends JButton implements MouseListener {
   @Override
   public void mouseClicked(MouseEvent e) {
     if (e.getButton() == MouseEvent.BUTTON1) { // Left click
+
       // TODO: move
     } else if (e.getButton() == MouseEvent.BUTTON3) { // Right click
       this.setBackground(this.getBackground().equals(SELECTED_COLOR) ? this.getDefaultColor() : SELECTED_COLOR);
@@ -48,21 +50,17 @@ public class SquareButton extends JButton implements MouseListener {
 
   @Override
   public void mousePressed(MouseEvent e) {
-
   }
 
   @Override
   public void mouseReleased(MouseEvent e) {
-
   }
 
   @Override
   public void mouseEntered(MouseEvent e) {
-
   }
 
   @Override
   public void mouseExited(MouseEvent e) {
-
   }
 }

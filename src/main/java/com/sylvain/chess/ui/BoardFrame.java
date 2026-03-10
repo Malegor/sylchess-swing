@@ -50,6 +50,9 @@ public class BoardFrame extends JFrame {
   private int moveNumber;
   @Getter @Setter
   private CountDownLatch moveLatch;
+  @Getter @Setter
+  private SquareButton selectedMoveOrigin, selectedMoveDestination;
+  private ChessBoard currentBoard;
 
   public BoardFrame() {
     this.setTitle("Sylchess Board");
@@ -173,7 +176,8 @@ public class BoardFrame extends JFrame {
       e -> {
         log.info("New Game");
         this.game = this.getGame();
-        this.game.getBoard().printBoard();
+        this.currentBoard = this.game.getBoard().copy();
+        this.currentBoard.printBoard();
         this.players = this.getSelectedPlayers(this.game.getBoard());
         for (final Player player : this.players) {
           if (player.getColor().equals(this.game.getFirstPlayingColor())) {
@@ -233,7 +237,7 @@ public class BoardFrame extends JFrame {
     for (int row = 0; row < 8; row++) {
       for (int col = 0; col < 8; col++) {
         final SquareButton square = this.squares[row][col];
-        final PieceOnBoard piece = this.game == null ? null : this.game.getBoard().getPieceAt(new Square(col + 1, ChessBoard.BOARD_ROWS - row));
+        final PieceOnBoard piece = this.currentBoard == null ? null : this.currentBoard.getPieceAt(new Square(col + 1, ChessBoard.BOARD_ROWS - row));
         square.setIcon(piece == null ? null : piece.getIcon(piece.getColor()));
       }
     }
@@ -260,6 +264,7 @@ public class BoardFrame extends JFrame {
     this.playersTurn = this.players.getFirst().equals(this.playersTurn) ? this.players.getLast() : this.players.getFirst();
     final ActionListener taskPerformer = evt -> {
       // This code block is executed after the specified delay on the EDT
+      this.currentBoard = this.game.getBoard().copy();
       updatePiecesOnBoard();
       // Optional: call repaint() and validate() on your components if needed
       // myPanel.validate();
