@@ -100,7 +100,7 @@ public class BoardFrame extends JFrame {
     boardPanel.setLayout(new GridLayout(ChessBoard.BOARD_ROWS, ChessBoard.BOARD_COLS));
     for (int row = 0; row < 8; row++) {
       for (int col = 0; col < 8; col++) {
-        final SquareButton square = new SquareButton(row, col);
+        final SquareButton square = new SquareButton(row, col, this);
         this.squares[row][col] = square;
         // Optional: Store location data in the button for later reference
         // square.putClientProperty("location", new Point(row, col));
