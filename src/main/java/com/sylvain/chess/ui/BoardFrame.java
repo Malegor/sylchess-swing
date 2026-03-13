@@ -32,7 +32,6 @@ public class BoardFrame extends JFrame {
   private static final String PUZZLE_SOLVER = "Puzzle solver";
   public static final int DELAY_TO_REPAINT_BOARD = 30;
 
-  private final SquareButton[][] squares;
   private final JTextField moveField;
   @Getter
   private final JLabel warningsLabel;
@@ -43,6 +42,7 @@ public class BoardFrame extends JFrame {
   private final JTextField fenDescription;
   private final JComboBox<String> whitePlayerChoice;
   private final JComboBox<String> blackPlayerChoice;
+  private final ChessBoardPanel boardPanel;
 
   private Gameplay game;
   private List<Player> players;
@@ -52,6 +52,7 @@ public class BoardFrame extends JFrame {
   private CountDownLatch moveLatch;
   @Getter @Setter
   private SquareButton selectedMoveOrigin, selectedMoveDestination;
+  @Getter
   private ChessBoard currentBoard;
 
   public BoardFrame() {
@@ -69,15 +70,16 @@ public class BoardFrame extends JFrame {
     };
     this.resultLabel = new JLabel();
     this.moveField = new JTextField(5);
+
     this.selectNewGameMode = new JComboBox<>(new String[]{"Classical game", "Chess 960 (TODO)", FEN_MODE});
     this.fenDescription = new JTextField(25);
     this.whitePlayerChoice = new JComboBox<>(new String[]{HUMAN_PLAYER, DUMMY_PLAYER, PUZZLE_SOLVER});
     this.blackPlayerChoice = new JComboBox<>(new String[]{HUMAN_PLAYER, DUMMY_PLAYER, PUZZLE_SOLVER});
+    this.boardPanel = new ChessBoardPanel(this);
 
     this.players = new ArrayList<>(2);
     this.moveLatch = new CountDownLatch(1);
-    this.squares = new SquareButton[8][8];
-    this.add(this.getBoardPanel());
+    this.add(this.boardPanel);
     this.add(this.getInteractivePanel());
     this.setVisible(true);
   }
@@ -96,21 +98,6 @@ public class BoardFrame extends JFrame {
     interactivePanel.add(submitMovePanel, BorderLayout.CENTER);
     interactivePanel.add(infoPanel, BorderLayout.SOUTH);
     return interactivePanel;
-  }
-
-  private JPanel getBoardPanel() {
-    final JPanel boardPanel = new JPanel();
-    boardPanel.setLayout(new GridLayout(ChessBoard.BOARD_ROWS, ChessBoard.BOARD_COLS));
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        final SquareButton square = new SquareButton(row, col, this);
-        this.squares[row][col] = square;
-        // Optional: Store location data in the button for later reference
-        // square.putClientProperty("location", new Point(row, col));
-        boardPanel.add(square);
-      }
-    }
-    return boardPanel;
   }
 
   private JPanel getInfoPanel() {
@@ -234,13 +221,7 @@ public class BoardFrame extends JFrame {
   }
 
   private void updatePiecesOnBoard() {
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        final SquareButton square = this.squares[row][col];
-        final PieceOnBoard piece = this.currentBoard == null ? null : this.currentBoard.getPieceAt(new Square(col + 1, ChessBoard.BOARD_ROWS - row));
-        square.setIcon(piece == null ? null : piece.getIcon(piece.getColor()));
-      }
-    }
+    this.boardPanel.updatePiecesOnBoard(this.currentBoard);
   }
 
   public static void main(String[] args) {
