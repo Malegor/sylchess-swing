@@ -2,10 +2,8 @@ package com.sylvain.chess.ui;
 
 import com.sylvain.chess.PlayerColor;
 import com.sylvain.chess.board.ChessBoard;
-import com.sylvain.chess.board.Square;
 import com.sylvain.chess.io.fen.FenLoader;
 import com.sylvain.chess.moves.Move;
-import com.sylvain.chess.pieces.PieceOnBoard;
 import com.sylvain.chess.play.Gameplay;
 import com.sylvain.chess.play.players.Player;
 import com.sylvain.chess.ui.players.GuiDummyPlayer;
@@ -243,6 +241,7 @@ public class BoardFrame extends JFrame {
       moveNumber++;
     }
     this.playersTurn = this.players.getFirst().equals(this.playersTurn) ? this.players.getLast() : this.players.getFirst();
+    this.boardPanel.setLastMove(move);
     final ActionListener taskPerformer = evt -> {
       // This code block is executed after the specified delay on the EDT
       this.currentBoard = this.game.getBoard().copy();

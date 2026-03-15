@@ -41,7 +41,7 @@ public class SquareButton extends JButton implements MouseListener {
     return (this.row + this.col) % 2 == 0 ? LIGHT_SQUARE_COLOR : DARK_SQUARE_COLOR;
   }
 
-  public void resetBackground() {
+  public void resetDefaultBackground() {
     this.setBackground(this.getDefaultColor());
   }
 

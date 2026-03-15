@@ -2,12 +2,14 @@ package com.sylvain.chess.ui;
 
 import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.board.Square;
+import com.sylvain.chess.moves.Move;
 import com.sylvain.chess.pieces.PieceOnBoard;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.Set;
 
 @Log4j2
@@ -22,6 +24,9 @@ public class ChessBoardPanel extends JPanel {
   @Getter
   private SquareButton selectedDestination;
 
+  private SquareButton lastMoveOrigin;
+  private SquareButton lastMoveDestination;
+
   public ChessBoardPanel(final BoardFrame frame) {
     super();
     this.frame = frame;
@@ -29,7 +34,7 @@ public class ChessBoardPanel extends JPanel {
     this.setLayout(new GridLayout(ChessBoard.BOARD_ROWS, ChessBoard.BOARD_COLS));
     for (int row = 0; row < 8; row++) {
       for (int col = 0; col < 8; col++) {
-        final SquareButton square = new SquareButton(row, col, this);
+        final SquareButton square = new SquareButton(col, row, this);
         this.squares[row][col] = square;
         // Optional: Store location data in the button for later reference
         // square.putClientProperty("location", new Point(row, col));
@@ -41,20 +46,28 @@ public class ChessBoardPanel extends JPanel {
   public void updatePiecesOnBoard(final ChessBoard board) {
     for (int row = 0; row < 8; row++) {
       for (int col = 0; col < 8; col++) {
-        final SquareButton square = this.squares[row][col];
-        final PieceOnBoard piece = board == null ? null : board.getPieceAt(new Square(col + 1, ChessBoard.BOARD_ROWS - row));
-        square.setIcon(piece == null ? null : piece.getIcon(piece.getColor()));
+        final SquareButton squareButton = this.squares[row][col];
+        final PieceOnBoard piece = board == null ? null : board.getPieceAt(getSquareFromSquareButton(squareButton));
+        squareButton.setIcon(piece == null ? null : piece.getIcon(piece.getColor()));
       }
     }
   }
 
-  public void resetAllPaintedSquares(final Set<Color> colors) {
+  private Square getSquareFromSquareButton(final SquareButton squareButton) {
+    return new Square(squareButton.getCol() + 1, ChessBoard.BOARD_ROWS - squareButton.getRow());
+  }
+
+  private SquareButton getSquareButtonFromSquare(final Square square) {
+    return this.squares[ChessBoard.BOARD_ROWS - square.row()][square.column() - 1];
+  }
+
+  public void resetAllPaintedSquares(final Set<Color> colorsToRemove) {
     // TODO: priority of prepared move over only selected square: reset should restore prepared move.
     for (int row = 0; row < 8; row++) {
       for (int col = 0; col < 8; col++) {
         final SquareButton square = this.squares[row][col];
-        if (colors.contains(square.getBackground())) {
-          square.resetBackground();
+        if (colorsToRemove.isEmpty() || colorsToRemove.contains(square.getBackground())) {
+          square.resetDefaultBackground();
         }
       }
     }
@@ -79,5 +92,11 @@ public class ChessBoardPanel extends JPanel {
       this.selectedDestination = null;
       this.resetAllPaintedSquares(Set.of(SquareButton.MOVE_ORIGIN_COLOR, SquareButton.MOVE_DESTINATION_COLOR, SquareButton.SELECTED_PIECE_COLOR));
     }
+  }
+
+  public void setLastMove(final Move move) {
+    final List<PieceOnBoard> descriptivePieces = move.getDescriptivePieces();
+    this.lastMoveOrigin = this.getSquareButtonFromSquare(descriptivePieces.get(0).getSquare());
+    this.lastMoveDestination = this.getSquareButtonFromSquare(descriptivePieces.get(1).getSquare());
   }
 }
