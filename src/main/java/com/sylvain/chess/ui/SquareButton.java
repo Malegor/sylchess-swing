@@ -17,10 +17,10 @@ public class SquareButton extends JButton implements MouseListener {
   private static final Color DARK_SQUARE_COLOR = Color.DARK_GRAY;
   public static final Color PAINT_COLOR = Color.BLUE;
   public static final Color SELECTED_PIECE_COLOR = Color.YELLOW;
-  public static final Color MOVE_ORIGIN_COLOR = Color.RED;
+  public static final Color MOVE_ORIGIN_COLOR = Color.YELLOW;
   public static final Color MOVE_DESTINATION_COLOR = Color.GREEN;
   public static final Color LAST_MOVE_ORIGIN_COLOR = Color.ORANGE;
-  public static final Color LAST_MOVE_DESTINATION_COLOR = Color.ORANGE;
+  public static final Color LAST_MOVE_DESTINATION_COLOR = Color.YELLOW;
   @Serial
   private static final long serialVersionUID = 1L;
 
