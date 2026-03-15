@@ -52,7 +52,13 @@ public class ChessBoardPanel extends JPanel {
       }
     }
     this.resetAllPaintedSquares(Set.of(SquareButton.LAST_MOVE_ORIGIN_COLOR, SquareButton.LAST_MOVE_DESTINATION_COLOR));
-    this.resetLastMoveColors();
+  }
+
+  private void resetSelectedColors() {
+    if (this.selectedOrigin != null)
+      this.selectedOrigin.setBackground(SquareButton.MOVE_ORIGIN_COLOR);
+    if (this.selectedDestination != null)
+      this.selectedDestination.setBackground(SquareButton.MOVE_DESTINATION_COLOR);
   }
 
   private void resetLastMoveColors() {
@@ -81,6 +87,7 @@ public class ChessBoardPanel extends JPanel {
       }
     }
     this.resetLastMoveColors();
+    this.resetSelectedColors();
   }
 
   public void prepareMove(final SquareButton selectedSquareButton) {
@@ -108,5 +115,12 @@ public class ChessBoardPanel extends JPanel {
     final List<PieceOnBoard> descriptivePieces = move.getDescriptivePieces();
     this.lastMoveOrigin = this.getSquareButtonFromSquare(descriptivePieces.get(0).getSquare());
     this.lastMoveDestination = this.getSquareButtonFromSquare(descriptivePieces.get(1).getSquare());
+  }
+
+  public void resetCurrentAndPreviousMoves() {
+    this.lastMoveOrigin = null;
+    this.lastMoveDestination = null;
+    this.selectedOrigin = null;
+    this.selectedDestination = null;
   }
 }

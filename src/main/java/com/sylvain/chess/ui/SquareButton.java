@@ -13,12 +13,13 @@ import java.util.Set;
 @Log4j2
 @Getter
 public class SquareButton extends JButton implements MouseListener {
+  // Colors still to use: PINK, BLACK, GRAY, WHITE
   private static final Color LIGHT_SQUARE_COLOR = Color.LIGHT_GRAY;
   private static final Color DARK_SQUARE_COLOR = Color.DARK_GRAY;
-  public static final Color PAINT_COLOR = Color.BLUE;
-  public static final Color SELECTED_PIECE_COLOR = Color.YELLOW;
-  public static final Color MOVE_ORIGIN_COLOR = Color.YELLOW;
-  public static final Color MOVE_DESTINATION_COLOR = Color.GREEN;
+  public static final Color PAINT_COLOR = Color.GREEN;
+  public static final Color SELECTED_PIECE_COLOR = Color.MAGENTA;
+  public static final Color MOVE_ORIGIN_COLOR = Color.CYAN;
+  public static final Color MOVE_DESTINATION_COLOR = Color.BLUE;
   public static final Color LAST_MOVE_ORIGIN_COLOR = Color.ORANGE;
   public static final Color LAST_MOVE_DESTINATION_COLOR = Color.YELLOW;
   @Serial

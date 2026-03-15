@@ -19,6 +19,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 @Log4j2
@@ -46,8 +47,8 @@ public class BoardFrame extends JFrame {
   private List<Player> players;
   private Player playersTurn;
   private int moveNumber;
-  @Getter @Setter
-  private CountDownLatch moveLatch;
+  @Getter
+  private CountDownLatch waitingForNextMove;
   @Getter @Setter
   private SquareButton selectedMoveOrigin, selectedMoveDestination;
   @Getter
@@ -76,7 +77,7 @@ public class BoardFrame extends JFrame {
     this.boardPanel = new ChessBoardPanel(this);
 
     this.players = new ArrayList<>(2);
-    this.moveLatch = new CountDownLatch(1);
+    this.resetWaitingForNextMove();
     this.add(this.boardPanel);
     this.add(this.getInteractivePanel());
     this.setVisible(true);
@@ -123,8 +124,10 @@ public class BoardFrame extends JFrame {
     final JPanel submitMovePanel = new JPanel(new FlowLayout());
     final JButton submitButton = new JButton("Submit move");
     submitButton.addActionListener(e -> {
-      this.updatePiecesOnBoard(); // This is to permit an update of the board in the case it has not been properly updated (ex: DELAY should be revised).
+      this.updatePiecesAfterMove();
       final String move = this.moveField.getText();
+      if (move.isEmpty())
+        return;
       for (final Player player : this.players) {
         if (player instanceof GuiInteractivePlayer guiInteractivePlayer) {
           // OBS: in case of two GUI players, both of them will have this move set, even if only one of them will actually play it.
@@ -132,7 +135,7 @@ public class BoardFrame extends JFrame {
           guiInteractivePlayer.setMove(move);
         }
       }
-      this.moveLatch.countDown();
+      this.waitingForNextMove.countDown();
       this.moveField.setText("");
     });
     submitMovePanel.add(this.moveField);
@@ -170,11 +173,13 @@ public class BoardFrame extends JFrame {
             break;
           }
         }
-        this.updatePiecesOnBoard();
+        this.boardPanel.resetCurrentAndPreviousMoves();
+        this.updatePiecesAfterMove();
+        this.boardPanel.resetAllPaintedSquares(Set.of());
         this.resultLabel.setText(" ");
         BoardFrame.this.clearMovesTable();
         this.warningsLabel.setText(" ");
-        this.moveLatch = new CountDownLatch(1);
+        this.resetWaitingForNextMove();
         this.moveNumber = game.getMoveNumber();
         this.movesTableModel.setColumnIdentifiers(new Object[]{this.movesTableModel.getColumnName(0), this.players.getFirst(), this.players.getLast()});
         new SwingWorker<Void, Void>() {
@@ -218,7 +223,7 @@ public class BoardFrame extends JFrame {
                     new GuiInteractivePlayer(color, "Human", board, BoardFrame.this);
   }
 
-  private void updatePiecesOnBoard() {
+  private void updatePiecesAfterMove() {
     this.boardPanel.updatePiecesOnBoard(this.currentBoard);
   }
 
@@ -245,7 +250,7 @@ public class BoardFrame extends JFrame {
     final ActionListener taskPerformer = evt -> {
       // This code block is executed after the specified delay on the EDT
       this.currentBoard = this.game.getBoard().copy();
-      updatePiecesOnBoard();
+      this.updatePiecesAfterMove();
       // Optional: call repaint() and validate() on your components if needed
       // myPanel.validate();
       // myPanel.repaint();
@@ -253,5 +258,9 @@ public class BoardFrame extends JFrame {
     final Timer timer = new Timer(DELAY_TO_REPAINT_BOARD, taskPerformer);
     timer.setRepeats(false);
     timer.start();
+  }
+
+  public void resetWaitingForNextMove() {
+    this.waitingForNextMove = new CountDownLatch(1);
   }
 }

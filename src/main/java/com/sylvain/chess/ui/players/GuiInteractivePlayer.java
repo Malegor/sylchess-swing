@@ -23,11 +23,11 @@ public class GuiInteractivePlayer extends InteractivePlayer {
   @Override
   protected String getNextMove() {
     try {
-      this.frame.getMoveLatch().await();
+      this.frame.getWaitingForNextMove().await();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    this.frame.setMoveLatch(new CountDownLatch(1));
+    this.frame.resetWaitingForNextMove();
     this.frame.getWarningsLabel().setText(" ");
     return this.move;
   }
