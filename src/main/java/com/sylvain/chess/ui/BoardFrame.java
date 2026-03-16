@@ -128,19 +128,20 @@ public class BoardFrame extends JFrame {
       final String move = this.moveField.getText();
       if (move.isEmpty())
         return;
-      for (final Player player : this.players) {
-        if (player instanceof GuiInteractivePlayer guiInteractivePlayer) {
-          // OBS: in case of two GUI players, both of them will have this move set, even if only one of them will actually play it.
-          // This could be improved by keeping track of which player has the next move.
-          guiInteractivePlayer.setMove(move);
-        }
-      }
+      final GuiInteractivePlayer nextPlayer = this.getNextInteractivePlayerToMove();
+      if (nextPlayer != null)
+        nextPlayer.setMove(move);
       this.waitingForNextMove.countDown();
       this.moveField.setText("");
     });
     submitMovePanel.add(this.moveField);
     submitMovePanel.add(submitButton);
     return submitMovePanel;
+  }
+
+  public GuiInteractivePlayer getNextInteractivePlayerToMove() {
+    final List<GuiInteractivePlayer> guiInteractivePlayers = this.players.stream().filter(GuiInteractivePlayer.class::isInstance).map(GuiInteractivePlayer.class::cast).toList();
+    return guiInteractivePlayers.size() > 1 ? (GuiInteractivePlayer) this.playersTurn : guiInteractivePlayers.isEmpty() ? null : guiInteractivePlayers.getFirst();
   }
 
   private JPanel getNewGamePanel() {
@@ -209,7 +210,6 @@ public class BoardFrame extends JFrame {
   }
 
   private List<Player> getSelectedPlayers(final ChessBoard board) {
-    this.getSelectedPlayer(board, PlayerColor.WHITE);
     return List.of(this.getSelectedPlayer(board, PlayerColor.WHITE), this.getSelectedPlayer(board, PlayerColor.BLACK));
   }
 
