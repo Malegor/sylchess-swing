@@ -225,7 +225,7 @@ public class BoardFrame extends JFrame {
   }
 
   private void updatePiecesAfterMove() {
-    this.boardPanel.updatePiecesOnBoard(this.currentBoard);
+    this.boardPanel.updatePiecesAfterLastMove(this.currentBoard);
   }
 
   public static void main(String[] args) {
@@ -267,5 +267,9 @@ public class BoardFrame extends JFrame {
 
   public void publishNextMove() {
     this.waitingForNextMove.countDown();
+  }
+
+  public ChessBoard getInternalBoard() {
+    return this.game.getBoard();
   }
 }

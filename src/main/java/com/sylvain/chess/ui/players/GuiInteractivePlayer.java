@@ -42,7 +42,8 @@ public class GuiInteractivePlayer extends InteractivePlayer {
     this.frame.getWarningsLabel().setText(" ");
     if (this.selectedOrigin == null || this.selectedDestination == null)
       return this.move;
-    final ChessBoard board = this.frame.getCurrentBoard();
+    // OBS: at this point, the frame's "current board" may not yet have been updated.
+    final ChessBoard board = this.frame.getInternalBoard();
     final PieceOnBoard pieceAtOrigin = board.getPieceAt(this.selectedOrigin);
     if (pieceAtOrigin == null || !pieceAtOrigin.getColor().equals(this.getColor()))
       return this.getBadMoveStr();
@@ -73,7 +74,7 @@ public class GuiInteractivePlayer extends InteractivePlayer {
         default -> pawn.toQueen(this.selectedDestination);
       };
     }
-    final Move moveToPlay = new Move(Map.of(pieceAtOrigin, movedPiece), this.frame.getCurrentBoard());
+    final Move moveToPlay = new Move(Map.of(pieceAtOrigin, movedPiece), board);
     return moveToPlay.isValidMove() ? moveToPlay.toPgn() : this.getBadMoveStr();
   }
 
