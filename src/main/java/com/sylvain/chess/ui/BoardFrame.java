@@ -175,7 +175,8 @@ public class BoardFrame extends JFrame {
             break;
           }
         }
-        this.boardPanel.resetCurrentAndPreviousMoves();
+        this.boardPanel.resetLastMove();
+        this.boardPanel.resetSelectedMove();
         this.updatePiecesAfterMove();
         this.boardPanel.resetAllPaintedSquares(Set.of());
         this.resultLabel.setText(" ");
@@ -247,6 +248,7 @@ public class BoardFrame extends JFrame {
       moveNumber++;
     }
     this.playersTurn = this.players.getFirst().equals(this.playersTurn) ? this.players.getLast() : this.players.getFirst();
+    this.boardPanel.resetSelectedMove();
     this.boardPanel.setLastMove(move);
     final ActionListener taskPerformer = evt -> {
       // This code block is executed after the specified delay on the EDT
