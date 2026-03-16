@@ -49,18 +49,17 @@ public class SquareButton extends JButton implements MouseListener {
 
   @Override
   public void mouseClicked(MouseEvent e) {
-    if (e.getButton() == MouseEvent.BUTTON1) { // Left click
-      this.setBackground(this.getBackground().equals(MOVE_ORIGIN_COLOR) ? this.getDefaultColor() : MOVE_ORIGIN_COLOR);
-      this.boardPanel.prepareMove(e.getClickCount() == 2 ? null : this);
+    if (e.getButton() == MouseEvent.BUTTON1) { // Left-click
+      this.boardPanel.prepareMove(this);
       // TODO: move
-    } else if (e.getButton() == MouseEvent.BUTTON3) { // Right click
+    } else if (e.getButton() == MouseEvent.BUTTON3) { // Right-click
       if (e.getClickCount() == 2) {
         this.boardPanel.resetAllPaintedSquares(Set.of(PAINT_COLOR));
       }
       else {
         this.setBackground(this.getBackground().equals(PAINT_COLOR) ? this.getDefaultColor() : PAINT_COLOR);
       }
-    } else if (e.getButton() == MouseEvent.BUTTON2) { // Middle click
+    } else if (e.getButton() == MouseEvent.BUTTON2) { // Middle-click
       log.info("Middle click detected! For now no action.");
     }
   }
