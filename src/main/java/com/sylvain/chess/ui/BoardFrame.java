@@ -77,7 +77,7 @@ public class BoardFrame extends JFrame {
     this.boardPanel = new ChessBoardPanel(this);
 
     this.players = new ArrayList<>(2);
-    this.resetWaitingForNextMove();
+    this.waitForNextMove();
     this.add(this.boardPanel);
     this.add(this.getInteractivePanel());
     this.setVisible(true);
@@ -131,7 +131,7 @@ public class BoardFrame extends JFrame {
       final GuiInteractivePlayer nextPlayer = this.getNextInteractivePlayerToMove();
       if (nextPlayer != null)
         nextPlayer.setMove(move);
-      this.waitingForNextMove.countDown();
+      this.publishNextMove();
       this.moveField.setText("");
     });
     submitMovePanel.add(this.moveField);
@@ -180,7 +180,7 @@ public class BoardFrame extends JFrame {
         this.resultLabel.setText(" ");
         BoardFrame.this.clearMovesTable();
         this.warningsLabel.setText(" ");
-        this.resetWaitingForNextMove();
+        this.waitForNextMove();
         this.moveNumber = game.getMoveNumber();
         this.movesTableModel.setColumnIdentifiers(new Object[]{this.movesTableModel.getColumnName(0), this.players.getFirst(), this.players.getLast()});
         new SwingWorker<Void, Void>() {
@@ -260,7 +260,11 @@ public class BoardFrame extends JFrame {
     timer.start();
   }
 
-  public void resetWaitingForNextMove() {
+  public void waitForNextMove() {
     this.waitingForNextMove = new CountDownLatch(1);
+  }
+
+  public void publishNextMove() {
+    this.waitingForNextMove.countDown();
   }
 }

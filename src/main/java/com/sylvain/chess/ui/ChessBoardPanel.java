@@ -4,6 +4,7 @@ import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.board.Square;
 import com.sylvain.chess.moves.Move;
 import com.sylvain.chess.pieces.PieceOnBoard;
+import com.sylvain.chess.ui.players.GuiInteractivePlayer;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
@@ -14,7 +15,6 @@ import java.util.Set;
 
 @Log4j2
 public class ChessBoardPanel extends JPanel {
-
   private final SquareButton[][] squares;
 
   private final BoardFrame frame;
@@ -91,24 +91,28 @@ public class ChessBoardPanel extends JPanel {
   }
 
   public void prepareMove(final SquareButton selectedSquareButton) {
+    final GuiInteractivePlayer playerToMove = this.frame.getNextInteractivePlayerToMove();
+    if (playerToMove == null)
+      return;
     if (selectedSquareButton == null) {
       this.selectedOrigin = null;
       this.selectedDestination = null;
-      this.resetAllPaintedSquares(Set.of(SquareButton.MOVE_ORIGIN_COLOR, SquareButton.MOVE_DESTINATION_COLOR, SquareButton.SELECTED_PIECE_COLOR));
+      this.frame.waitForNextMove();
     }
-    else if (this.selectedOrigin == null) { // TODO: a piece must be in this square
+    else if (this.selectedOrigin == null || this.selectedDestination != null) {
+      // OBS: a piece must be in this square.
+      final PieceOnBoard piece = this.frame.getCurrentBoard().getPieceAt(getSquareFromSquareButton(selectedSquareButton));
+      if (piece == null || !piece.getColor().equals(playerToMove.getColor()))
+        return;
       this.selectedOrigin = selectedSquareButton;
-      selectedSquareButton.setBackground(SquareButton.MOVE_ORIGIN_COLOR);
+      this.frame.waitForNextMove();
     }
-    else if (this.selectedDestination == null) {
+    else {
+      // TODO: check controlled squares ignoring other pieces
       this.selectedDestination = selectedSquareButton;
-      selectedSquareButton.setBackground(SquareButton.MOVE_DESTINATION_COLOR);
+      this.frame.publishNextMove();
     }
-    else { // TODO: premoves (>1)
-      this.selectedOrigin = null;
-      this.selectedDestination = null;
-      this.resetAllPaintedSquares(Set.of(SquareButton.MOVE_ORIGIN_COLOR, SquareButton.MOVE_DESTINATION_COLOR, SquareButton.SELECTED_PIECE_COLOR));
-    }
+    this.resetAllPaintedSquares(Set.of(SquareButton.MOVE_ORIGIN_COLOR, SquareButton.MOVE_DESTINATION_COLOR, SquareButton.SELECTED_PIECE_COLOR));
   }
 
   public void setLastMove(final Move move) {

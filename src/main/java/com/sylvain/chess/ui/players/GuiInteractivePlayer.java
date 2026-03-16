@@ -26,7 +26,7 @@ public class GuiInteractivePlayer extends InteractivePlayer {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    this.frame.resetWaitingForNextMove();
+    this.frame.waitForNextMove();
     this.frame.getWarningsLabel().setText(" ");
     return this.move;
   }
