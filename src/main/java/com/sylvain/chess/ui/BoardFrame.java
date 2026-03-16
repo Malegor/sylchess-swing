@@ -2,10 +2,8 @@ package com.sylvain.chess.ui;
 
 import com.sylvain.chess.PlayerColor;
 import com.sylvain.chess.board.ChessBoard;
-import com.sylvain.chess.board.Square;
 import com.sylvain.chess.io.fen.FenLoader;
 import com.sylvain.chess.moves.Move;
-import com.sylvain.chess.pieces.PieceOnBoard;
 import com.sylvain.chess.play.Gameplay;
 import com.sylvain.chess.play.players.Player;
 import com.sylvain.chess.ui.players.GuiDummyPlayer;
@@ -21,11 +19,11 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 @Log4j2
 public class BoardFrame extends JFrame {
-  private static final Color SELECTED_COLOR = Color.BLUE;
   private static final int DEFAULT_SIZE = 600;
   private static final String FEN_MODE = "Load FEN description:";
   private static final String HUMAN_PLAYER = "Human player";
@@ -33,7 +31,7 @@ public class BoardFrame extends JFrame {
   private static final String PUZZLE_SOLVER = "Puzzle solver";
   public static final int DELAY_TO_REPAINT_BOARD = 30;
 
-  private final SquareButton[][] squares;
+  @Getter
   private final JTextField moveField;
   @Getter
   private final JLabel warningsLabel;
@@ -44,13 +42,18 @@ public class BoardFrame extends JFrame {
   private final JTextField fenDescription;
   private final JComboBox<String> whitePlayerChoice;
   private final JComboBox<String> blackPlayerChoice;
+  private final ChessBoardPanel boardPanel;
 
   private Gameplay game;
   private List<Player> players;
   private Player playersTurn;
   private int moveNumber;
+  @Getter
+  private CountDownLatch waitingForNextMove;
   @Getter @Setter
-  private CountDownLatch moveLatch;
+  private SquareButton selectedMoveOrigin, selectedMoveDestination;
+  @Getter
+  private ChessBoard currentBoard;
 
   public BoardFrame() {
     this.setTitle("Sylchess Board");
@@ -67,15 +70,16 @@ public class BoardFrame extends JFrame {
     };
     this.resultLabel = new JLabel();
     this.moveField = new JTextField(5);
+
     this.selectNewGameMode = new JComboBox<>(new String[]{"Classical game", "Chess 960 (TODO)", FEN_MODE});
     this.fenDescription = new JTextField(25);
     this.whitePlayerChoice = new JComboBox<>(new String[]{HUMAN_PLAYER, DUMMY_PLAYER, PUZZLE_SOLVER});
     this.blackPlayerChoice = new JComboBox<>(new String[]{HUMAN_PLAYER, DUMMY_PLAYER, PUZZLE_SOLVER});
+    this.boardPanel = new ChessBoardPanel(this);
 
     this.players = new ArrayList<>(2);
-    this.moveLatch = new CountDownLatch(1);
-    this.squares = new SquareButton[8][8];
-    this.add(this.getBoardPanel());
+    this.waitForNextMove();
+    this.add(this.boardPanel);
     this.add(this.getInteractivePanel());
     this.setVisible(true);
   }
@@ -94,27 +98,6 @@ public class BoardFrame extends JFrame {
     interactivePanel.add(submitMovePanel, BorderLayout.CENTER);
     interactivePanel.add(infoPanel, BorderLayout.SOUTH);
     return interactivePanel;
-  }
-
-  private JPanel getBoardPanel() {
-    final JPanel boardPanel = new JPanel();
-    boardPanel.setLayout(new GridLayout(ChessBoard.BOARD_ROWS, ChessBoard.BOARD_COLS));
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        final SquareButton square = new SquareButton(row, col);
-        square.setBackground(square.getDefaultColor());
-        square.addActionListener(e -> {
-          final SquareButton clickedButton = (SquareButton) e.getSource();
-          // Example action: change the color of the clicked button
-          clickedButton.setBackground(clickedButton.getBackground().equals(SELECTED_COLOR) ? clickedButton.getDefaultColor() : SELECTED_COLOR);
-        });
-        this.squares[row][col] = square;
-        // Optional: Store location data in the button for later reference
-        // square.putClientProperty("location", new Point(row, col));
-        boardPanel.add(square);
-      }
-    }
-    return boardPanel;
   }
 
   private JPanel getInfoPanel() {
@@ -142,21 +125,24 @@ public class BoardFrame extends JFrame {
     final JPanel submitMovePanel = new JPanel(new FlowLayout());
     final JButton submitButton = new JButton("Submit move");
     submitButton.addActionListener(e -> {
-      this.updatePiecesOnBoard(); // This is to permit an update of the board in the case it has not been properly updated (ex: DELAY should be revised).
+      this.updatePiecesAfterMove();
       final String move = this.moveField.getText();
-      for (final Player player : this.players) {
-        if (player instanceof GuiInteractivePlayer guiInteractivePlayer) {
-          // OBS: in case of two GUI players, both of them will have this move set, even if only one of them will actually play it.
-          // This could be improved by keeping track of which player has the next move.
-          guiInteractivePlayer.setMove(move);
-        }
-      }
-      this.moveLatch.countDown();
+      if (move.isEmpty())
+        return;
+      final GuiInteractivePlayer nextPlayer = this.getNextInteractivePlayerToMove();
+      if (nextPlayer != null)
+        nextPlayer.setMove(move);
+      this.publishNextMove();
       this.moveField.setText("");
     });
     submitMovePanel.add(this.moveField);
     submitMovePanel.add(submitButton);
     return submitMovePanel;
+  }
+
+  public GuiInteractivePlayer getNextInteractivePlayerToMove() {
+    final List<GuiInteractivePlayer> guiInteractivePlayers = this.players.stream().filter(GuiInteractivePlayer.class::isInstance).map(GuiInteractivePlayer.class::cast).toList();
+    return guiInteractivePlayers.size() > 1 ? (GuiInteractivePlayer) this.playersTurn : guiInteractivePlayers.isEmpty() ? null : guiInteractivePlayers.getFirst();
   }
 
   private JPanel getNewGamePanel() {
@@ -180,7 +166,8 @@ public class BoardFrame extends JFrame {
       e -> {
         log.info("New Game");
         this.game = this.getGame();
-        this.game.getBoard().printBoard();
+        this.currentBoard = this.game.getBoard().copy();
+        this.currentBoard.printBoard();
         this.players = this.getSelectedPlayers(this.game.getBoard());
         for (final Player player : this.players) {
           if (player.getColor().equals(this.game.getFirstPlayingColor())) {
@@ -188,11 +175,13 @@ public class BoardFrame extends JFrame {
             break;
           }
         }
-        this.updatePiecesOnBoard();
+        this.boardPanel.resetCurrentAndPreviousMoves();
+        this.updatePiecesAfterMove();
+        this.boardPanel.resetAllPaintedSquares(Set.of());
         this.resultLabel.setText(" ");
         BoardFrame.this.clearMovesTable();
         this.warningsLabel.setText(" ");
-        this.moveLatch = new CountDownLatch(1);
+        this.waitForNextMove();
         this.moveNumber = game.getMoveNumber();
         this.movesTableModel.setColumnIdentifiers(new Object[]{this.movesTableModel.getColumnName(0), this.players.getFirst(), this.players.getLast()});
         new SwingWorker<Void, Void>() {
@@ -222,7 +211,6 @@ public class BoardFrame extends JFrame {
   }
 
   private List<Player> getSelectedPlayers(final ChessBoard board) {
-    this.getSelectedPlayer(board, PlayerColor.WHITE);
     return List.of(this.getSelectedPlayer(board, PlayerColor.WHITE), this.getSelectedPlayer(board, PlayerColor.BLACK));
   }
 
@@ -236,14 +224,8 @@ public class BoardFrame extends JFrame {
                     new GuiInteractivePlayer(color, "Human", board, BoardFrame.this);
   }
 
-  private void updatePiecesOnBoard() {
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        final SquareButton square = this.squares[row][col];
-        final PieceOnBoard piece = this.game == null ? null : this.game.getBoard().getPieceAt(new Square(col + 1, ChessBoard.BOARD_ROWS - row));
-        square.setIcon(piece == null ? null : piece.getIcon(piece.getColor()));
-      }
-    }
+  private void updatePiecesAfterMove() {
+    this.boardPanel.updatePiecesOnBoard(this.currentBoard);
   }
 
   public static void main(String[] args) {
@@ -252,7 +234,7 @@ public class BoardFrame extends JFrame {
   }
 
   public void applyMove(final Move move) {
-    final String moveStr = move.toPgn();
+    final String moveStr = move.toCompletePgn();
     if (this.playersTurn.getColor().equals(PlayerColor.WHITE)) {
       this.movesTableModel.addRow(new Object[]{moveNumber, moveStr, ""});
     }
@@ -265,9 +247,11 @@ public class BoardFrame extends JFrame {
       moveNumber++;
     }
     this.playersTurn = this.players.getFirst().equals(this.playersTurn) ? this.players.getLast() : this.players.getFirst();
+    this.boardPanel.setLastMove(move);
     final ActionListener taskPerformer = evt -> {
       // This code block is executed after the specified delay on the EDT
-      updatePiecesOnBoard();
+      this.currentBoard = this.game.getBoard().copy();
+      this.updatePiecesAfterMove();
       // Optional: call repaint() and validate() on your components if needed
       // myPanel.validate();
       // myPanel.repaint();
@@ -275,5 +259,13 @@ public class BoardFrame extends JFrame {
     final Timer timer = new Timer(DELAY_TO_REPAINT_BOARD, taskPerformer);
     timer.setRepeats(false);
     timer.start();
+  }
+
+  public void waitForNextMove() {
+    this.waitingForNextMove = new CountDownLatch(1);
+  }
+
+  public void publishNextMove() {
+    this.waitingForNextMove.countDown();
   }
 }
