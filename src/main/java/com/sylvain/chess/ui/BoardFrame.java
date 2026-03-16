@@ -233,7 +233,7 @@ public class BoardFrame extends JFrame {
   }
 
   public void applyMove(final Move move) {
-    final String moveStr = move.toPgn();
+    final String moveStr = move.toCompletePgn();
     if (this.playersTurn.getColor().equals(PlayerColor.WHITE)) {
       this.movesTableModel.addRow(new Object[]{moveNumber, moveStr, ""});
     }

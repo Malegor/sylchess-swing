@@ -8,7 +8,6 @@ import com.sylvain.chess.ui.BoardFrame;
 import lombok.Setter;
 
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 public class GuiInteractivePlayer extends InteractivePlayer {
   private final BoardFrame frame;
