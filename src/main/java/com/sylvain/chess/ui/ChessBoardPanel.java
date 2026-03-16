@@ -99,17 +99,18 @@ public class ChessBoardPanel extends JPanel {
       this.selectedDestination = null;
       this.frame.waitForNextMove();
     }
-    else if (this.selectedOrigin == null || this.selectedDestination != null) {
+    else if (this.selectedOrigin == null || this.selectedDestination != null || selectedSquareButton.equals(this.selectedOrigin)) {
       // OBS: a piece must be in this square.
+      this.selectedDestination = null;
       final PieceOnBoard piece = this.frame.getCurrentBoard().getPieceAt(getSquareFromSquareButton(selectedSquareButton));
-      if (piece == null || !piece.getColor().equals(playerToMove.getColor()))
-        return;
-      this.selectedOrigin = selectedSquareButton;
-      this.frame.waitForNextMove();
+      if (piece != null && piece.getColor().equals(playerToMove.getColor())) {
+        this.selectedOrigin = selectedSquareButton;
+      }
     }
     else {
       // TODO: check controlled squares ignoring other pieces
       this.selectedDestination = selectedSquareButton;
+      playerToMove.setNextMoveSquares(this.getSquareFromSquareButton(this.selectedOrigin), this.getSquareFromSquareButton(this.selectedDestination));
       this.frame.publishNextMove();
     }
     this.resetAllPaintedSquares(Set.of(SquareButton.MOVE_ORIGIN_COLOR, SquareButton.MOVE_DESTINATION_COLOR, SquareButton.SELECTED_PIECE_COLOR));
