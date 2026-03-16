@@ -43,7 +43,7 @@ public class ChessBoardPanel extends JPanel {
     }
   }
 
-  public void updatePiecesOnBoard(final ChessBoard board) {
+  public void updatePiecesAfterLastMove(final ChessBoard board) {
     for (int row = 0; row < 8; row++) {
       for (int col = 0; col < 8; col++) {
         final SquareButton squareButton = this.squares[row][col];
@@ -95,8 +95,7 @@ public class ChessBoardPanel extends JPanel {
     if (playerToMove == null)
       return;
     if (selectedSquareButton == null) {
-      this.selectedOrigin = null;
-      this.selectedDestination = null;
+      this.resetSelectedMove();
       this.frame.waitForNextMove();
     }
     else if (this.selectedOrigin == null || this.selectedDestination != null || selectedSquareButton.equals(this.selectedOrigin)) {
@@ -111,8 +110,6 @@ public class ChessBoardPanel extends JPanel {
       // TODO: check controlled squares ignoring other pieces
       this.selectedDestination = selectedSquareButton;
       playerToMove.setNextMoveSquares(this.getSquareFromSquareButton(this.selectedOrigin), this.getSquareFromSquareButton(this.selectedDestination));
-      this.selectedOrigin = null;
-      this.selectedDestination = null;
       this.frame.publishNextMove();
     }
     this.resetAllPaintedSquares(Set.of(SquareButton.MOVE_ORIGIN_COLOR, SquareButton.MOVE_DESTINATION_COLOR, SquareButton.SELECTED_PIECE_COLOR));
@@ -124,10 +121,17 @@ public class ChessBoardPanel extends JPanel {
     this.lastMoveDestination = this.getSquareButtonFromSquare(descriptivePieces.get(1).getSquare());
   }
 
-  public void resetCurrentAndPreviousMoves() {
+  public void resetLastMove() {
     this.lastMoveOrigin = null;
     this.lastMoveDestination = null;
+  }
+
+  public void resetSelectedMove() {
+    if (this.selectedOrigin != null)
+      this.selectedOrigin.resetDefaultBackground();
     this.selectedOrigin = null;
+    if (this.selectedDestination != null)
+      this.selectedDestination.resetDefaultBackground();
     this.selectedDestination = null;
   }
 }
