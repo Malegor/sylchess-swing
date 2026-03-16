@@ -4,8 +4,12 @@ import com.sylvain.chess.PlayerColor;
 import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.board.Square;
 import com.sylvain.chess.moves.Move;
+import com.sylvain.chess.pieces.Bishop;
 import com.sylvain.chess.pieces.King;
+import com.sylvain.chess.pieces.Knight;
+import com.sylvain.chess.pieces.Pawn;
 import com.sylvain.chess.pieces.PieceOnBoard;
+import com.sylvain.chess.pieces.Queen;
 import com.sylvain.chess.pieces.Rook;
 import com.sylvain.chess.play.players.interactive.InteractivePlayer;
 import com.sylvain.chess.ui.BoardFrame;
@@ -42,21 +46,34 @@ public class GuiInteractivePlayer extends InteractivePlayer {
     final PieceOnBoard pieceAtOrigin = board.getPieceAt(this.selectedOrigin);
     if (pieceAtOrigin == null || !pieceAtOrigin.getColor().equals(this.getColor()))
       return this.getBadMoveStr();
-    final PieceOnBoard pieceAtDestination = board.getPieceAt(this.selectedDestination);
-    if (pieceAtDestination != null && pieceAtDestination.getColor().equals(this.getColor())) {
+    final PieceOnBoard originalPieceAtDestination = board.getPieceAt(this.selectedDestination);
+    final int columnDiff = this.selectedDestination.column() - this.selectedOrigin.column();
+    final int rowDiff = this.selectedDestination.row() - this.selectedOrigin.row();
+    PieceOnBoard movedPiece = pieceAtOrigin.move(columnDiff, rowDiff);
+    if (originalPieceAtDestination != null && originalPieceAtDestination.getColor().equals(this.getColor())) {
       // Castling
-      if (pieceAtDestination.equals(pieceAtOrigin)) {
+      if (originalPieceAtDestination.equals(pieceAtOrigin)) {
         return this.getBadMoveStr();
       }
-      final King king = (King) Stream.of(pieceAtOrigin, pieceAtDestination).filter(p -> p instanceof King).findFirst().orElse(null);
-      final Rook rook = (Rook) Stream.of(pieceAtOrigin, pieceAtDestination).filter(p -> p instanceof Rook).findFirst().orElse(null);
+      final King king = (King) Stream.of(pieceAtOrigin, originalPieceAtDestination).filter(p -> p instanceof King).findFirst().orElse(null);
+      final Rook rook = (Rook) Stream.of(pieceAtOrigin, originalPieceAtDestination).filter(p -> p instanceof Rook).findFirst().orElse(null);
       if (king == null || rook == null || king.getSquare().row() != ChessBoard.getFirstRow(this.getColor()) || rook.getSquare().row() != ChessBoard.getFirstRow(this.getColor()))
         return this.getBadMoveStr();
       return ChessBoard.areValidSquaresForCastle(king, rook, true) ? Move.KING_SIDE_CASTLE_PGN : Move.QUEEN_SIDE_CASTLE_PGN;
     }
-    // TODO: promo
-    final Move moveToPlay = new Move(Map.of(pieceAtOrigin, pieceAtOrigin.move(this.selectedDestination.column() - this.selectedOrigin.column(),
-            this.selectedDestination.row() - this.selectedOrigin.row())), this.frame.getCurrentBoard());
+    if (pieceAtOrigin.getName().equals(Pawn.NAME_LC) && ChessBoard.getPromotionRow(this.getColor()) == this.selectedDestination.row()) {
+      // Promotion: for now, read the promotion piece from the move text field (in the future, there could be a popup to select the piece).
+      final Pawn pawn = (Pawn) pieceAtOrigin;
+      final String pieceStr = this.frame.getMoveField().getText();
+      final char pieceChar = pieceStr.isEmpty() ? Queen.NAME_LC : Character.toLowerCase(pieceStr.toCharArray()[0]);
+      movedPiece = switch (pieceChar) {
+        case Bishop.NAME_LC -> pawn.toBishop(this.selectedDestination);
+        case Rook.NAME_LC -> pawn.toRook(this.selectedDestination);
+        case Knight.NAME_LC -> pawn.toKnight(this.selectedDestination);
+        default -> pawn.toQueen(this.selectedDestination);
+      };
+    }
+    final Move moveToPlay = new Move(Map.of(pieceAtOrigin, movedPiece), this.frame.getCurrentBoard());
     return moveToPlay.isValidMove() ? moveToPlay.toPgn() : this.getBadMoveStr();
   }
 

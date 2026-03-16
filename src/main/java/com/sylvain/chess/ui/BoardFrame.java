@@ -31,6 +31,7 @@ public class BoardFrame extends JFrame {
   private static final String PUZZLE_SOLVER = "Puzzle solver";
   public static final int DELAY_TO_REPAINT_BOARD = 30;
 
+  @Getter
   private final JTextField moveField;
   @Getter
   private final JLabel warningsLabel;
