@@ -111,6 +111,8 @@ public class ChessBoardPanel extends JPanel {
       // TODO: check controlled squares ignoring other pieces
       this.selectedDestination = selectedSquareButton;
       playerToMove.setNextMoveSquares(this.getSquareFromSquareButton(this.selectedOrigin), this.getSquareFromSquareButton(this.selectedDestination));
+      this.selectedOrigin = null;
+      this.selectedDestination = null;
       this.frame.publishNextMove();
     }
     this.resetAllPaintedSquares(Set.of(SquareButton.MOVE_ORIGIN_COLOR, SquareButton.MOVE_DESTINATION_COLOR, SquareButton.SELECTED_PIECE_COLOR));

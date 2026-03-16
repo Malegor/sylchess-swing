@@ -40,23 +40,28 @@ public class GuiInteractivePlayer extends InteractivePlayer {
       return this.move;
     final ChessBoard board = this.frame.getCurrentBoard();
     final PieceOnBoard pieceAtOrigin = board.getPieceAt(this.selectedOrigin);
-    final String to = " -> ";
     if (pieceAtOrigin == null || !pieceAtOrigin.getColor().equals(this.getColor()))
-      return this.selectedOrigin + to + this.selectedDestination; // OBS: Raise a warning of invalid move.
+      return this.getBadMoveStr();
     final PieceOnBoard pieceAtDestination = board.getPieceAt(this.selectedDestination);
     if (pieceAtDestination != null && pieceAtDestination.getColor().equals(this.getColor())) {
       // Castling
       if (pieceAtDestination.equals(pieceAtOrigin)) {
-        return this.selectedOrigin + to + this.selectedDestination; // OBS: Raise a warning of invalid move.
+        return this.getBadMoveStr();
       }
       final King king = (King) Stream.of(pieceAtOrigin, pieceAtDestination).filter(p -> p instanceof King).findFirst().orElse(null);
       final Rook rook = (Rook) Stream.of(pieceAtOrigin, pieceAtDestination).filter(p -> p instanceof Rook).findFirst().orElse(null);
       if (king == null || rook == null || king.getSquare().row() != ChessBoard.getFirstRow(this.getColor()) || rook.getSquare().row() != ChessBoard.getFirstRow(this.getColor()))
-        return this.selectedOrigin + to + this.selectedDestination; // OBS: Raise a warning of invalid move.
+        return this.getBadMoveStr();
       return ChessBoard.areValidSquaresForCastle(king, rook, true) ? Move.KING_SIDE_CASTLE_PGN : Move.QUEEN_SIDE_CASTLE_PGN;
     }
     // TODO: promo
-    return new Move(Map.of(pieceAtOrigin, pieceAtOrigin.move(this.selectedDestination.column() - this.selectedOrigin.column(), this.selectedDestination.row() - this.selectedOrigin.row())), this.frame.getCurrentBoard()).toPgn();
+    final Move moveToPlay = new Move(Map.of(pieceAtOrigin, pieceAtOrigin.move(this.selectedDestination.column() - this.selectedOrigin.column(),
+            this.selectedDestination.row() - this.selectedOrigin.row())), this.frame.getCurrentBoard());
+    return moveToPlay.isValidMove() ? moveToPlay.toPgn() : this.getBadMoveStr();
+  }
+
+  private String getBadMoveStr() {
+    return this.selectedOrigin + " -> " + this.selectedDestination;
   }
 
   @Override
