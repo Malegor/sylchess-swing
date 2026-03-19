@@ -3,6 +3,7 @@ package com.sylvain.chess.ui;
 import com.sylvain.chess.PlayerColor;
 import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.io.fen.FenLoader;
+import com.sylvain.chess.io.fen.FenSaver;
 import com.sylvain.chess.moves.Move;
 import com.sylvain.chess.play.Gameplay;
 import com.sylvain.chess.play.players.Player;
@@ -122,7 +123,7 @@ public class BoardFrame extends JFrame {
   }
 
   private JPanel getSubmitMovePanel() {
-    final JPanel submitMovePanel = new JPanel(new FlowLayout());
+    final JPanel panel = new JPanel(new FlowLayout());
     final JButton submitButton = new JButton("Submit move");
     submitButton.addActionListener(e -> {
       this.updatePiecesAfterMove();
@@ -135,9 +136,34 @@ public class BoardFrame extends JFrame {
       this.publishNextMove();
       this.moveField.setText("");
     });
-    submitMovePanel.add(this.moveField);
-    submitMovePanel.add(submitButton);
-    return submitMovePanel;
+    final JButton exportFenButton = new JButton("Export position");
+    exportFenButton.addActionListener(e -> {
+      if (this.game == null)
+        return;
+      final JTextArea textArea = new JTextArea(2, 35);
+      textArea.setText(FenSaver.getPositionString(this.game));
+      textArea.setEditable(false);
+      textArea.setLineWrap(true);
+      textArea.setWrapStyleWord(true);
+
+      // Wrap the JTextArea in a JScrollPane for scrolling capability
+      final JScrollPane scrollPane = new JScrollPane(textArea);
+      // Set a preferred size for the scroll pane to control the dialog size if needed,
+      // otherwise default size works well with JTextArea hints
+
+      // Display the scrollable text area in a JOptionPane message dialog
+      // null as the parent component centers the dialog on the screen
+      JOptionPane.showMessageDialog(
+              panel,
+              scrollPane,
+              "FEN description",
+              JOptionPane.INFORMATION_MESSAGE
+      );
+    });
+    panel.add(this.moveField);
+    panel.add(submitButton);
+    panel.add(exportFenButton);
+    return panel;
   }
 
   public GuiInteractivePlayer getNextInteractivePlayerToMove() {
