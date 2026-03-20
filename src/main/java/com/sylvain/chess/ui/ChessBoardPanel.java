@@ -10,14 +10,18 @@ import lombok.extern.log4j.Log4j2;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Log4j2
 public class ChessBoardPanel extends JPanel {
   private final SquareButton[][] squares;
 
   private final BoardFrame frame;
+
+  private boolean isFlipped;
 
   @Getter
   private SquareButton selectedOrigin;
@@ -29,6 +33,7 @@ public class ChessBoardPanel extends JPanel {
 
   public ChessBoardPanel(final BoardFrame frame) {
     super();
+    this.isFlipped = false;
     this.frame = frame;
     this.squares = new SquareButton[8][8];
     this.setLayout(new GridLayout(ChessBoard.BOARD_ROWS, ChessBoard.BOARD_COLS));
@@ -51,7 +56,7 @@ public class ChessBoardPanel extends JPanel {
         squareButton.setIcon(piece == null ? null : piece.getIcon(piece.getColor()));
       }
     }
-    this.resetAllPaintedSquares(Set.of(SquareButton.LAST_MOVE_ORIGIN_COLOR, SquareButton.LAST_MOVE_DESTINATION_COLOR));
+    this.resetAllPaintedSquares(Set.of(SquareButton.LAST_MOVE_ORIGIN_COLOR, SquareButton.LAST_MOVE_DESTINATION_COLOR, SquareButton.MOVE_ORIGIN_COLOR, SquareButton.MOVE_DESTINATION_COLOR));
   }
 
   private void resetSelectedColors() {
@@ -69,11 +74,13 @@ public class ChessBoardPanel extends JPanel {
   }
 
   private Square getSquareFromSquareButton(final SquareButton squareButton) {
-    return new Square(squareButton.getCol() + 1, ChessBoard.BOARD_ROWS - squareButton.getRow());
+    return this.isFlipped ? new Square(ChessBoard.BOARD_COLS - squareButton.getCol(), squareButton.getRow() + 1)
+            : new Square(squareButton.getCol() + 1, ChessBoard.BOARD_ROWS - squareButton.getRow());
   }
 
   private SquareButton getSquareButtonFromSquare(final Square square) {
-    return this.squares[ChessBoard.BOARD_ROWS - square.row()][square.column() - 1];
+    return this.isFlipped ? this.squares[square.row() - 1][ChessBoard.BOARD_COLS - square.column()]
+            : this.squares[ChessBoard.BOARD_ROWS - square.row()][square.column() - 1];
   }
 
   public void resetAllPaintedSquares(final Set<Color> colorsToRemove) {
@@ -133,5 +140,32 @@ public class ChessBoardPanel extends JPanel {
     if (this.selectedDestination != null)
       this.selectedDestination.resetDefaultBackground();
     this.selectedDestination = null;
+  }
+
+  public void flipBoard() {
+    this.isFlipped = !this.isFlipped;
+    if (this.selectedOrigin != null)
+      this.selectedOrigin = this.getOppositeSquareButton(this.selectedOrigin);
+    if (this.selectedDestination != null)
+      this.selectedDestination = this.getOppositeSquareButton(this.selectedDestination);
+    if (this.lastMoveOrigin != null)
+      this.lastMoveOrigin = this.getOppositeSquareButton(this.lastMoveOrigin);
+    if (this.lastMoveDestination != null)
+      this.lastMoveDestination = this.getOppositeSquareButton(this.lastMoveDestination);
+    for (final SquareButton square : this.getPaintedSquares()) {
+      this.getOppositeSquareButton(square).setBackground(SquareButton.PAINT_COLOR);
+      square.resetDefaultBackground();
+    }
+  }
+
+  private List<SquareButton> getPaintedSquares() {
+    return Arrays.stream(this.squares)
+            .flatMap(Arrays::stream)
+            .filter(square -> square.getBackground().equals(SquareButton.PAINT_COLOR))
+            .collect(Collectors.toList());
+  }
+
+  private SquareButton getOppositeSquareButton(final SquareButton squareButton) {
+    return this.squares[ChessBoard.BOARD_ROWS - squareButton.getRow() - 1][ChessBoard.BOARD_COLS - squareButton.getCol() - 1];
   }
 }
