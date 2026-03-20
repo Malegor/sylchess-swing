@@ -51,8 +51,6 @@ public class BoardFrame extends JFrame {
   private int moveNumber;
   @Getter
   private CountDownLatch waitingForNextMove;
-  @Getter @Setter
-  private SquareButton selectedMoveOrigin, selectedMoveDestination;
   @Getter
   private ChessBoard currentBoard;
 
@@ -136,11 +134,27 @@ public class BoardFrame extends JFrame {
       this.publishNextMove();
       this.moveField.setText("");
     });
+    final JButton exportFenButton = this.getExportFenButton(panel);
+    final JButton flipBoardButton = new JButton("Flip board");
+    flipBoardButton.addActionListener(e -> {
+      if (this.game == null)
+        return;
+      this.boardPanel.flipBoard();
+      this.updatePiecesAfterMove();
+    });
+    panel.add(this.moveField);
+    panel.add(submitButton);
+    panel.add(exportFenButton);
+    panel.add(flipBoardButton);
+    return panel;
+  }
+
+  private JButton getExportFenButton(final JPanel panel) {
     final JButton exportFenButton = new JButton("Export position");
     exportFenButton.addActionListener(e -> {
       if (this.game == null)
         return;
-      final JTextArea textArea = new JTextArea(2, 35);
+      final JTextArea textArea = new JTextArea(1, 40);
       textArea.setText(FenSaver.getPositionString(this.game));
       textArea.setEditable(false);
       textArea.setLineWrap(true);
@@ -160,10 +174,7 @@ public class BoardFrame extends JFrame {
               JOptionPane.INFORMATION_MESSAGE
       );
     });
-    panel.add(this.moveField);
-    panel.add(submitButton);
-    panel.add(exportFenButton);
-    return panel;
+    return exportFenButton;
   }
 
   public GuiInteractivePlayer getNextInteractivePlayerToMove() {
