@@ -27,6 +27,7 @@ import java.util.concurrent.CountDownLatch;
 public class BoardFrame extends JFrame {
   private static final int DEFAULT_SIZE = 600;
   private static final String FEN_MODE = "Load FEN description:";
+  private static final String CHESS_960 = "Chess 960";
   private static final String HUMAN_PLAYER = "Human player";
   private static final String DUMMY_PLAYER = "Dummy";
   private static final String PUZZLE_SOLVER = "Puzzle solver";
@@ -70,7 +71,7 @@ public class BoardFrame extends JFrame {
     this.resultLabel = new JLabel();
     this.moveField = new JTextField(5);
 
-    this.selectNewGameMode = new JComboBox<>(new String[]{"Classical game", "Chess 960 (TODO)", FEN_MODE});
+    this.selectNewGameMode = new JComboBox<>(new String[]{"Classical game", CHESS_960, FEN_MODE});
     this.fenDescription = new JTextField(25);
     this.whitePlayerChoice = new JComboBox<>(new String[]{HUMAN_PLAYER, DUMMY_PLAYER, PUZZLE_SOLVER});
     this.blackPlayerChoice = new JComboBox<>(new String[]{HUMAN_PLAYER, DUMMY_PLAYER, PUZZLE_SOLVER});
@@ -240,7 +241,9 @@ public class BoardFrame extends JFrame {
 
   private Gameplay getGame() {
     try {
-      return FEN_MODE.equals(this.selectNewGameMode.getSelectedItem()) ? FenLoader.loadPosition(this.fenDescription.getText()) : new Gameplay(ChessBoard.defaultBoard());
+      return FEN_MODE.equals(this.selectNewGameMode.getSelectedItem()) ? FenLoader.loadPosition(this.fenDescription.getText())
+              : CHESS_960.equals(this.selectNewGameMode.getSelectedItem()) ? new Gameplay(ChessBoard.get960Board(null))
+              : new Gameplay(ChessBoard.defaultBoard());
     }
     catch (final IllegalArgumentException ex) {
       this.warningsLabel.setText(ex.getMessage());
