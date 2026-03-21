@@ -101,11 +101,10 @@ public class ChessBoardPanel extends JPanel {
     final GuiInteractivePlayer playerToMove = this.frame.getNextInteractivePlayerToMove();
     if (playerToMove == null)
       return;
-    if (selectedSquareButton == null) {
+    if (selectedSquareButton == null || selectedSquareButton.equals(this.selectedOrigin)) {
       this.resetSelectedMove();
-      this.frame.waitForNextMove();
     }
-    else if (this.selectedOrigin == null || this.selectedDestination != null || selectedSquareButton.equals(this.selectedOrigin)) {
+    else if (this.selectedOrigin == null || this.selectedDestination != null) {
       // OBS: a piece must be in this square.
       this.selectedDestination = null;
       final PieceOnBoard piece = this.frame.getCurrentBoard().getPieceAt(getSquareFromSquareButton(selectedSquareButton));
