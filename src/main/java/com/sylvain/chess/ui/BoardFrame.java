@@ -11,7 +11,6 @@ import com.sylvain.chess.ui.players.GuiDummyPlayer;
 import com.sylvain.chess.ui.players.GuiInteractivePlayer;
 import com.sylvain.chess.ui.players.GuiMateSolver;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 import javax.swing.*;
@@ -41,7 +40,7 @@ public class BoardFrame extends JFrame {
   private final DefaultTableModel movesTableModel;
   private final JLabel resultLabel;
   private final JComboBox<String> selectNewGameMode;
-  private final JTextField fenDescription;
+  private final JTextField newGameTextField;
   private final JComboBox<String> whitePlayerChoice;
   private final JComboBox<String> blackPlayerChoice;
   private final ChessBoardPanel boardPanel;
@@ -72,7 +71,7 @@ public class BoardFrame extends JFrame {
     this.moveField = new JTextField(5);
 
     this.selectNewGameMode = new JComboBox<>(new String[]{"Classical game", CHESS_960, FEN_MODE});
-    this.fenDescription = new JTextField(25);
+    this.newGameTextField = new JTextField(25);
     this.whitePlayerChoice = new JComboBox<>(new String[]{HUMAN_PLAYER, DUMMY_PLAYER, PUZZLE_SOLVER});
     this.blackPlayerChoice = new JComboBox<>(new String[]{HUMAN_PLAYER, DUMMY_PLAYER, PUZZLE_SOLVER});
     this.boardPanel = new ChessBoardPanel(this);
@@ -186,7 +185,7 @@ public class BoardFrame extends JFrame {
   private JPanel getNewGamePanel() {
     final JPanel newGamePanel = new JPanel(new FlowLayout());
     newGamePanel.add(this.selectNewGameMode);
-    newGamePanel.add(this.fenDescription);
+    newGamePanel.add(this.newGameTextField);
     final JLabel whiteLabel = new JLabel("White: ");
     final JLabel blackLabel = new JLabel("Black: ");
     newGamePanel.add(whiteLabel);
@@ -241,14 +240,25 @@ public class BoardFrame extends JFrame {
 
   private Gameplay getGame() {
     try {
-      return FEN_MODE.equals(this.selectNewGameMode.getSelectedItem()) ? FenLoader.loadPosition(this.fenDescription.getText())
-              : CHESS_960.equals(this.selectNewGameMode.getSelectedItem()) ? new Gameplay(ChessBoard.get960Board(null))
+      return FEN_MODE.equals(this.selectNewGameMode.getSelectedItem()) ? FenLoader.loadPosition(this.newGameTextField.getText())
+              : CHESS_960.equals(this.selectNewGameMode.getSelectedItem()) ? new Gameplay(ChessBoard.get960Board(this.getSeed()))
               : new Gameplay(ChessBoard.defaultBoard());
     }
     catch (final IllegalArgumentException ex) {
       this.warningsLabel.setText(ex.getMessage());
       throw ex;
     }
+  }
+
+  private Long getSeed() {
+    final String text = this.newGameTextField.getText().trim();
+    try {
+      return Long.parseLong(text);
+    } catch (NumberFormatException e) {
+      if (!text.isEmpty())
+        log.info("Invalid format: \"{}\"", text);
+    }
+    return null;
   }
 
   private List<Player> getSelectedPlayers(final ChessBoard board) {
