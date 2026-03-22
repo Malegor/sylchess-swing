@@ -53,6 +53,7 @@ public class BoardFrame extends JFrame {
   private CountDownLatch waitingForNextMove;
   @Getter
   private ChessBoard currentBoard;
+  private long timeInMs;
 
   public BoardFrame() {
     this.setTitle("Sylchess Board");
@@ -61,7 +62,7 @@ public class BoardFrame extends JFrame {
     this.setResizable(true);
     this.getContentPane().setLayout(new GridLayout(1, 2));
     this.warningsLabel = new JLabel();
-    this.movesTableModel = new DefaultTableModel(new String[]{"Move #", "White", "Black"}, 0) {
+    this.movesTableModel = new DefaultTableModel(new String[]{"Move #", "White", "Black", "White time", "Black time"}, 0) {
       @Override
       public boolean isCellEditable(int row, int column) {
         return false;
@@ -221,7 +222,9 @@ public class BoardFrame extends JFrame {
         this.warningsLabel.setText(" ");
         this.waitForNextMove();
         this.moveNumber = game.getMoveNumber();
-        this.movesTableModel.setColumnIdentifiers(new Object[]{this.movesTableModel.getColumnName(0), this.players.getFirst(), this.players.getLast()});
+        this.movesTableModel.setColumnIdentifiers(new Object[]{this.movesTableModel.getColumnName(0), this.players.getFirst(), this.players.getLast(),
+                this.movesTableModel.getColumnName(3), this.movesTableModel.getColumnName(4)});
+        this.timeInMs = System.currentTimeMillis();
         new SwingWorker<Void, Void>() {
           @Override
           protected Void doInBackground() {
@@ -286,15 +289,18 @@ public class BoardFrame extends JFrame {
 
   public void applyMove(final Move move) {
     final String moveStr = move.toCompletePgn();
+    final long timeDiff = System.currentTimeMillis() - this.timeInMs;
     if (this.playersTurn.getColor().equals(PlayerColor.WHITE)) {
-      this.movesTableModel.addRow(new Object[]{moveNumber, moveStr, ""});
+      this.movesTableModel.addRow(new Object[]{moveNumber, moveStr, "", timeDiff, ""});
     }
     else if (this.movesTableModel.getRowCount() == 0) {
-      this.movesTableModel.addRow(new Object[]{moveNumber, "...", moveStr});
+      this.movesTableModel.addRow(new Object[]{moveNumber, "...", moveStr, "", timeDiff});
       moveNumber++;
     }
     else {
-      this.movesTableModel.setValueAt(moveStr, this.movesTableModel.getRowCount() - 1, this.movesTableModel.getColumnCount() - 1);
+      // TODO constants for columns
+      this.movesTableModel.setValueAt(moveStr, this.movesTableModel.getRowCount() - 1, 2);
+      this.movesTableModel.setValueAt(timeDiff, this.movesTableModel.getRowCount() - 1, 4);
       moveNumber++;
     }
     this.playersTurn = this.players.getFirst().equals(this.playersTurn) ? this.players.getLast() : this.players.getFirst();
@@ -311,6 +317,7 @@ public class BoardFrame extends JFrame {
     final Timer timer = new Timer(DELAY_TO_REPAINT_BOARD, taskPerformer);
     timer.setRepeats(false);
     timer.start();
+    this.timeInMs = System.currentTimeMillis();
   }
 
   public void waitForNextMove() {
