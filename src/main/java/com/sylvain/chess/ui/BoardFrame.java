@@ -221,7 +221,7 @@ public class BoardFrame extends JFrame {
         BoardFrame.this.clearMovesTable();
         this.warningsLabel.setText(" ");
         this.waitForNextMove();
-        this.moveNumber = game.getMoveNumber();
+        this.moveNumber = game.getInfo().getMoveNumber();
         this.movesTableModel.setColumnIdentifiers(new Object[]{this.movesTableModel.getColumnName(0), this.players.getFirst(), this.players.getLast(),
                 this.movesTableModel.getColumnName(3), this.movesTableModel.getColumnName(4)});
         this.timeInMs = System.currentTimeMillis();
