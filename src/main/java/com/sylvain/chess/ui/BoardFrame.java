@@ -218,7 +218,7 @@ public class BoardFrame extends JFrame {
         this.currentBoard.printBoard();
         this.players = this.getSelectedPlayers(this.game.getBoard());
         for (final Player player : this.players) {
-          if (player.getColor().equals(this.game.getFirstPlayingColor())) {
+          if (player.getColor().equals(this.game.getHistory().getFirstPlayingColor())) {
             this.playersTurn = player;
             break;
           }
