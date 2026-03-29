@@ -298,7 +298,7 @@ public class BoardFrame extends JFrame {
   }
 
   public void applyMove(final Move move) {
-    final String moveStr = move.toCompletePgn();
+    final String moveStr = move.toCompleteSan();
     final long timeDiff = System.currentTimeMillis() - this.timeInMs;
     if (this.playersTurn.getColor().equals(PlayerColor.WHITE)) {
       this.movesTableModel.addRow(new Object[]{moveNumber, moveStr, "", timeDiff, ""});

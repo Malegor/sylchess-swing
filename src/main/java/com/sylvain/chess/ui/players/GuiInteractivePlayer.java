@@ -60,7 +60,7 @@ public class GuiInteractivePlayer extends InteractivePlayer {
       final Rook rook = (Rook) Stream.of(pieceAtOrigin, originalPieceAtDestination).filter(p -> p instanceof Rook).findFirst().orElse(null);
       if (king == null || rook == null || king.getSquare().row() != ChessBoard.getFirstRow(this.getColor()) || rook.getSquare().row() != ChessBoard.getFirstRow(this.getColor()))
         return this.getBadMoveStr();
-      return ChessBoard.areValidSquaresForCastle(king, rook, true) ? Move.KING_SIDE_CASTLE_PGN : Move.QUEEN_SIDE_CASTLE_PGN;
+      return ChessBoard.areValidSquaresForCastle(king, rook, true) ? Move.KING_SIDE_CASTLE_SAN : Move.QUEEN_SIDE_CASTLE_SAN;
     }
     if (pieceAtOrigin.getName().equals(Pawn.NAME_LC) && ChessBoard.getPromotionRow(this.getColor()) == this.selectedDestination.row()) {
       // Promotion: for now, read the promotion piece from the move text field (in the future, there could be a popup to select the piece).
@@ -75,7 +75,7 @@ public class GuiInteractivePlayer extends InteractivePlayer {
       };
     }
     final Move moveToPlay = new Move(Map.of(pieceAtOrigin, movedPiece), board);
-    return moveToPlay.isValidMove() ? moveToPlay.toPgn() : this.getBadMoveStr();
+    return moveToPlay.isValidMove() ? moveToPlay.toSan() : this.getBadMoveStr();
   }
 
   private String getBadMoveStr() {
