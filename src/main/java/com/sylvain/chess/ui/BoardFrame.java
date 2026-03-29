@@ -135,7 +135,7 @@ public class BoardFrame extends JFrame {
       this.publishNextMove();
       this.moveField.setText("");
     });
-    final JButton exportFenButton = this.getExportFenButton(panel);
+    final JButton exportFenButton = this.getExportPositionButton(panel);
     final JButton flipBoardButton = new JButton("Flip board");
     flipBoardButton.addActionListener(e -> {
       if (this.game == null)
@@ -150,19 +150,29 @@ public class BoardFrame extends JFrame {
     return panel;
   }
 
-  private JButton getExportFenButton(final JPanel panel) {
-    final JButton exportFenButton = new JButton("Export position");
+  private JButton getExportPositionButton(final JPanel panel) {
+    final JButton exportFenButton = new JButton("Export game");
     exportFenButton.addActionListener(e -> {
       if (this.game == null)
         return;
-      final JTextArea textArea = new JTextArea(1, 40);
-      textArea.setText(FenSaver.getPositionString(this.game));
-      textArea.setEditable(false);
-      textArea.setLineWrap(true);
-      textArea.setWrapStyleWord(true);
+      final JTextArea fenText = new JTextArea(1, 40);
+      fenText.setText(FenSaver.getPositionString(this.game));
+      fenText.setEditable(false);
+      fenText.setLineWrap(true);
+      fenText.setWrapStyleWord(true);
+      final JScrollPane fenPane = new JScrollPane(fenText);
 
-      // Wrap the JTextArea in a JScrollPane for scrolling capability
-      final JScrollPane scrollPane = new JScrollPane(textArea);
+      final JTextArea pgnText = new JTextArea(20, 40);
+      pgnText.setText("ORAO");
+      pgnText.setEditable(false);
+      pgnText.setLineWrap(true);
+      pgnText.setWrapStyleWord(true);
+      final JScrollPane pgnPane = new JScrollPane(pgnText);
+
+      final JTabbedPane tabbedPane = new JTabbedPane();
+      tabbedPane.addTab("FEN", fenPane);
+      tabbedPane.addTab("PGN", pgnPane);
+
       // Set a preferred size for the scroll pane to control the dialog size if needed,
       // otherwise default size works well with JTextArea hints
 
@@ -170,8 +180,8 @@ public class BoardFrame extends JFrame {
       // null as the parent component centers the dialog on the screen
       JOptionPane.showMessageDialog(
               panel,
-              scrollPane,
-              "FEN description",
+              tabbedPane,
+              "Game description",
               JOptionPane.INFORMATION_MESSAGE
       );
     });
