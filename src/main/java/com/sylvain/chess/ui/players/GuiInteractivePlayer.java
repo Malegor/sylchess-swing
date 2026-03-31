@@ -92,8 +92,8 @@ public class GuiInteractivePlayer extends InteractivePlayer {
   }
 
   @Override
-  protected void handleValidMove(final Move move) {
-    super.handleValidMove(move);
+  public void publishMove(final Move move) {
+    super.publishMove(move);
     this.frame.applyMove(move);
   }
 

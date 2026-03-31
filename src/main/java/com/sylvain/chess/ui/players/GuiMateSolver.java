@@ -17,8 +17,8 @@ public class GuiMateSolver extends MateSolver {
   }
 
   @Override
-  protected void handleValidMove(Move move) {
-    super.handleValidMove(move);
+  public void publishMove(Move move) {
+    super.publishMove(move);
     this.frame.applyMove(move);
   }
 
