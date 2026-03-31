@@ -4,6 +4,7 @@ import com.sylvain.chess.PlayerColor;
 import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.io.fen.FenLoader;
 import com.sylvain.chess.io.fen.FenSaver;
+import com.sylvain.chess.io.pgn.PgnSaver;
 import com.sylvain.chess.moves.Move;
 import com.sylvain.chess.play.Gameplay;
 import com.sylvain.chess.play.players.Player;
@@ -82,6 +83,11 @@ public class BoardFrame extends JFrame {
     this.add(this.boardPanel);
     this.add(this.getInteractivePanel());
     this.setVisible(true);
+  }
+
+  public static void main(String[] args) {
+    // Ensure GUI creation happens on the Event Dispatch Thread (EDT)
+    SwingUtilities.invokeLater(BoardFrame::new);
   }
 
   public void clearMovesTable() {
@@ -163,7 +169,7 @@ public class BoardFrame extends JFrame {
       final JScrollPane fenPane = new JScrollPane(fenText);
 
       final JTextArea pgnText = new JTextArea(20, 40);
-      pgnText.setText("ORAO");
+      pgnText.setText(PgnSaver.saveGame(this.game));
       pgnText.setEditable(false);
       pgnText.setLineWrap(true);
       pgnText.setWrapStyleWord(true);
@@ -292,26 +298,21 @@ public class BoardFrame extends JFrame {
     this.boardPanel.updatePiecesAfterLastMove(this.currentBoard);
   }
 
-  public static void main(String[] args) {
-    // Ensure GUI creation happens on the Event Dispatch Thread (EDT)
-    SwingUtilities.invokeLater(BoardFrame::new);
-  }
-
   public void applyMove(final Move move) {
     final String moveStr = move.toCompleteSan();
     final long timeDiff = System.currentTimeMillis() - this.timeInMs;
     if (this.playersTurn.getColor().equals(PlayerColor.WHITE)) {
-      this.movesTableModel.addRow(new Object[]{moveNumber, moveStr, "", timeDiff, ""});
+      this.movesTableModel.addRow(new Object[]{this.moveNumber, moveStr, "", timeDiff, ""});
     }
     else if (this.movesTableModel.getRowCount() == 0) {
-      this.movesTableModel.addRow(new Object[]{moveNumber, "...", moveStr, "", timeDiff});
-      moveNumber++;
+      this.movesTableModel.addRow(new Object[]{this.moveNumber, Move.NO_MOVE_STR, moveStr, "", timeDiff});
+      this.moveNumber++;
     }
     else {
       // TODO constants for columns
       this.movesTableModel.setValueAt(moveStr, this.movesTableModel.getRowCount() - 1, 2);
       this.movesTableModel.setValueAt(timeDiff, this.movesTableModel.getRowCount() - 1, 4);
-      moveNumber++;
+      this.moveNumber++;
     }
     this.playersTurn = this.players.getFirst().equals(this.playersTurn) ? this.players.getLast() : this.players.getFirst();
     this.boardPanel.resetSelectedMove();
