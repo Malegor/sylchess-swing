@@ -4,6 +4,7 @@ import com.sylvain.chess.PlayerColor;
 import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.io.fen.FenLoader;
 import com.sylvain.chess.io.fen.FenSaver;
+import com.sylvain.chess.io.pgn.PgnSaver;
 import com.sylvain.chess.moves.Move;
 import com.sylvain.chess.play.Gameplay;
 import com.sylvain.chess.play.players.Player;
@@ -84,6 +85,11 @@ public class BoardFrame extends JFrame {
     this.setVisible(true);
   }
 
+  public static void main(String[] args) {
+    // Ensure GUI creation happens on the Event Dispatch Thread (EDT)
+    SwingUtilities.invokeLater(BoardFrame::new);
+  }
+
   public void clearMovesTable() {
     this.movesTableModel.setRowCount(0);
   }
@@ -135,7 +141,7 @@ public class BoardFrame extends JFrame {
       this.publishNextMove();
       this.moveField.setText("");
     });
-    final JButton exportFenButton = this.getExportFenButton(panel);
+    final JButton exportFenButton = this.getExportPositionButton(panel);
     final JButton flipBoardButton = new JButton("Flip board");
     flipBoardButton.addActionListener(e -> {
       if (this.game == null)
@@ -150,19 +156,29 @@ public class BoardFrame extends JFrame {
     return panel;
   }
 
-  private JButton getExportFenButton(final JPanel panel) {
-    final JButton exportFenButton = new JButton("Export position");
+  private JButton getExportPositionButton(final JPanel panel) {
+    final JButton exportFenButton = new JButton("Export game");
     exportFenButton.addActionListener(e -> {
       if (this.game == null)
         return;
-      final JTextArea textArea = new JTextArea(1, 40);
-      textArea.setText(FenSaver.getPositionString(this.game));
-      textArea.setEditable(false);
-      textArea.setLineWrap(true);
-      textArea.setWrapStyleWord(true);
+      final JTextArea fenText = new JTextArea(1, 40);
+      fenText.setText(FenSaver.getPositionString(this.game));
+      fenText.setEditable(false);
+      fenText.setLineWrap(true);
+      fenText.setWrapStyleWord(true);
+      final JScrollPane fenPane = new JScrollPane(fenText);
 
-      // Wrap the JTextArea in a JScrollPane for scrolling capability
-      final JScrollPane scrollPane = new JScrollPane(textArea);
+      final JTextArea pgnText = new JTextArea(20, 40);
+      pgnText.setText(PgnSaver.saveGame(this.game));
+      pgnText.setEditable(false);
+      pgnText.setLineWrap(true);
+      pgnText.setWrapStyleWord(true);
+      final JScrollPane pgnPane = new JScrollPane(pgnText);
+
+      final JTabbedPane tabbedPane = new JTabbedPane();
+      tabbedPane.addTab("FEN", fenPane);
+      tabbedPane.addTab("PGN", pgnPane);
+
       // Set a preferred size for the scroll pane to control the dialog size if needed,
       // otherwise default size works well with JTextArea hints
 
@@ -170,8 +186,8 @@ public class BoardFrame extends JFrame {
       // null as the parent component centers the dialog on the screen
       JOptionPane.showMessageDialog(
               panel,
-              scrollPane,
-              "FEN description",
+              tabbedPane,
+              "Game description",
               JOptionPane.INFORMATION_MESSAGE
       );
     });
@@ -208,7 +224,7 @@ public class BoardFrame extends JFrame {
         this.currentBoard.printBoard();
         this.players = this.getSelectedPlayers(this.game.getBoard());
         for (final Player player : this.players) {
-          if (player.getColor().equals(this.game.getFirstPlayingColor())) {
+          if (player.getColor().equals(this.game.getHistory().getFirstPlayingColor())) {
             this.playersTurn = player;
             break;
           }
@@ -221,7 +237,7 @@ public class BoardFrame extends JFrame {
         BoardFrame.this.clearMovesTable();
         this.warningsLabel.setText(" ");
         this.waitForNextMove();
-        this.moveNumber = game.getMoveNumber();
+        this.moveNumber = game.getInfo().getMoveNumber();
         this.movesTableModel.setColumnIdentifiers(new Object[]{this.movesTableModel.getColumnName(0), this.players.getFirst(), this.players.getLast(),
                 this.movesTableModel.getColumnName(3), this.movesTableModel.getColumnName(4)});
         this.timeInMs = System.currentTimeMillis();
@@ -282,26 +298,21 @@ public class BoardFrame extends JFrame {
     this.boardPanel.updatePiecesAfterLastMove(this.currentBoard);
   }
 
-  public static void main(String[] args) {
-    // Ensure GUI creation happens on the Event Dispatch Thread (EDT)
-    SwingUtilities.invokeLater(BoardFrame::new);
-  }
-
   public void applyMove(final Move move) {
-    final String moveStr = move.toCompletePgn();
+    final String moveStr = move.toCompleteSan();
     final long timeDiff = System.currentTimeMillis() - this.timeInMs;
     if (this.playersTurn.getColor().equals(PlayerColor.WHITE)) {
-      this.movesTableModel.addRow(new Object[]{moveNumber, moveStr, "", timeDiff, ""});
+      this.movesTableModel.addRow(new Object[]{this.moveNumber, moveStr, "", timeDiff, ""});
     }
     else if (this.movesTableModel.getRowCount() == 0) {
-      this.movesTableModel.addRow(new Object[]{moveNumber, "...", moveStr, "", timeDiff});
-      moveNumber++;
+      this.movesTableModel.addRow(new Object[]{this.moveNumber, Move.NO_MOVE_STR, moveStr, "", timeDiff});
+      this.moveNumber++;
     }
     else {
       // TODO constants for columns
       this.movesTableModel.setValueAt(moveStr, this.movesTableModel.getRowCount() - 1, 2);
       this.movesTableModel.setValueAt(timeDiff, this.movesTableModel.getRowCount() - 1, 4);
-      moveNumber++;
+      this.moveNumber++;
     }
     this.playersTurn = this.players.getFirst().equals(this.playersTurn) ? this.players.getLast() : this.players.getFirst();
     this.boardPanel.resetSelectedMove();
