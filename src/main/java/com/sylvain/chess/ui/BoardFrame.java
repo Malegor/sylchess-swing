@@ -275,7 +275,7 @@ public class BoardFrame extends JFrame {
       return Long.parseLong(text);
     } catch (NumberFormatException e) {
       if (!text.isEmpty())
-        log.info("Invalid format: \"{}\"", text);
+        log.warn("Invalid format: \"{}\"", text);
     }
     return null;
   }
@@ -288,10 +288,23 @@ public class BoardFrame extends JFrame {
     final JComboBox<String> combo = color.equals(PlayerColor.WHITE) ? this.whitePlayerChoice : this.blackPlayerChoice;
     // TODO: parametrize player name and maxNumber of moves for solver
     return PUZZLE_SOLVER.equals(combo.getSelectedItem()) ?
-            new GuiMateSolver(color, board, 5, this) :
+            new GuiMateSolver(color, board, this.getMaxNumberOfMoves(), this) :
             DUMMY_PLAYER.equals(combo.getSelectedItem()) ?
                     new GuiDummyPlayer(color, board, this) :
                     new GuiInteractivePlayer(color, "Human", board, BoardFrame.this);
+  }
+
+  private int getMaxNumberOfMoves() {
+    final String text = this.moveField.getText();
+    try {
+      if (!text.isEmpty())
+        log.info("Reading depth from text field: {}", text);
+      return text.isEmpty() ? 5 : Integer.parseInt(text);
+    } catch (NumberFormatException e) {
+      if (!text.isEmpty())
+        log.warn("Invalid format: \"{}\"", text);
+    }
+    return 5;
   }
 
   private void updatePiecesAfterMove() {
