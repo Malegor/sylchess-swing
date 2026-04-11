@@ -31,7 +31,8 @@ public class BoardFrame extends JFrame {
   private static final String HUMAN_PLAYER = "Human player";
   private static final String DUMMY_PLAYER = "Dummy";
   private static final String PUZZLE_SOLVER = "Puzzle solver";
-  public static final int DELAY_TO_REPAINT_BOARD = 30;
+  public static final int DELAY_TO_REPAINT_BOARD_MS = 30;
+  public static final int DEFAULT_SEMI_MOVES = 9;
 
   @Getter
   private final JTextField moveField;
@@ -288,23 +289,23 @@ public class BoardFrame extends JFrame {
     final JComboBox<String> combo = color.equals(PlayerColor.WHITE) ? this.whitePlayerChoice : this.blackPlayerChoice;
     // TODO: parametrize player name and maxNumber of moves for solver
     return PUZZLE_SOLVER.equals(combo.getSelectedItem()) ?
-            new GuiMateSolver(color, board, this.getMaxNumberOfMoves(), this) :
+            new GuiMateSolver(color, board, this.getMaxNumberOfSemiMoves(), this) :
             DUMMY_PLAYER.equals(combo.getSelectedItem()) ?
                     new GuiDummyPlayer(color, board, this) :
                     new GuiInteractivePlayer(color, "Human", board, BoardFrame.this);
   }
 
-  private int getMaxNumberOfMoves() {
+  private int getMaxNumberOfSemiMoves() {
     final String text = this.moveField.getText();
     try {
       if (!text.isEmpty())
         log.info("Reading depth from text field: {}", text);
-      return text.isEmpty() ? 5 : Integer.parseInt(text);
+      return text.isEmpty() ? DEFAULT_SEMI_MOVES : Integer.parseInt(text);
     } catch (NumberFormatException e) {
       if (!text.isEmpty())
         log.warn("Invalid format: \"{}\"", text);
     }
-    return 5;
+    return 9;
   }
 
   private void updatePiecesAfterMove() {
@@ -338,7 +339,7 @@ public class BoardFrame extends JFrame {
       // myPanel.validate();
       // myPanel.repaint();
     };
-    final Timer timer = new Timer(DELAY_TO_REPAINT_BOARD, taskPerformer);
+    final Timer timer = new Timer(DELAY_TO_REPAINT_BOARD_MS, taskPerformer);
     timer.setRepeats(false);
     timer.start();
     this.timeInMs = System.currentTimeMillis();
