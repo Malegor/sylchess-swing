@@ -86,11 +86,6 @@ public class BoardFrame extends JFrame {
     this.setVisible(true);
   }
 
-  public static void main(String[] args) {
-    // Ensure GUI creation happens on the Event Dispatch Thread (EDT)
-    SwingUtilities.invokeLater(BoardFrame::new);
-  }
-
   public void clearMovesTable() {
     this.movesTableModel.setRowCount(0);
   }
