@@ -314,7 +314,7 @@ public class BoardFrame extends JFrame {
       this.movesTableModel.addRow(new Object[]{this.moveNumber, moveStr, "", timeDiff, ""});
     }
     else if (this.movesTableModel.getRowCount() == 0) {
-      this.movesTableModel.addRow(new Object[]{this.moveNumber, Move.NO_MOVE_STR, moveStr, "", timeDiff});
+      this.movesTableModel.addRow(new Object[]{this.moveNumber, Move.NO_WHITE_MOVE_STR, moveStr, "", timeDiff});
       this.moveNumber++;
     }
     else {
