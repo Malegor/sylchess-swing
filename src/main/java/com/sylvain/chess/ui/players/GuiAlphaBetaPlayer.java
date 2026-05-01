@@ -3,15 +3,15 @@ package com.sylvain.chess.ui.players;
 import com.sylvain.chess.PlayerColor;
 import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.moves.Move;
-import com.sylvain.chess.play.players.MateSolver;
+import com.sylvain.chess.play.players.AlphaBetaPlayer;
 import com.sylvain.chess.ui.BoardFrame;
 
 import java.util.List;
 
-public class GuiMateSolver extends MateSolver {
+public class GuiAlphaBetaPlayer extends AlphaBetaPlayer {
   private final BoardFrame frame;
 
-  public GuiMateSolver(final PlayerColor color, final ChessBoard board, final int maxNumberOfSemiMoves, final BoardFrame frame) {
+  public GuiAlphaBetaPlayer(final PlayerColor color, final ChessBoard board, final int maxNumberOfSemiMoves, final BoardFrame frame) {
     super(color, board, maxNumberOfSemiMoves);
     this.frame = frame;
   }

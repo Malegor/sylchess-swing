@@ -10,7 +10,7 @@ import com.sylvain.chess.play.Gameplay;
 import com.sylvain.chess.play.players.Player;
 import com.sylvain.chess.ui.players.GuiDummyPlayer;
 import com.sylvain.chess.ui.players.GuiInteractivePlayer;
-import com.sylvain.chess.ui.players.GuiMateSolver;
+import com.sylvain.chess.ui.players.GuiAlphaBetaPlayer;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
@@ -284,7 +284,7 @@ public class BoardFrame extends JFrame {
     final JComboBox<String> combo = color.equals(PlayerColor.WHITE) ? this.whitePlayerChoice : this.blackPlayerChoice;
     // TODO: parametrize player name and maxNumber of moves for solver
     return PUZZLE_SOLVER.equals(combo.getSelectedItem()) ?
-            new GuiMateSolver(color, board, this.getMaxNumberOfSemiMoves(), this) :
+            new GuiAlphaBetaPlayer(color, board, this.getMaxNumberOfSemiMoves(), this) :
             DUMMY_PLAYER.equals(combo.getSelectedItem()) ?
                     new GuiDummyPlayer(color, board, this) :
                     new GuiInteractivePlayer(color, "Human", board, BoardFrame.this);
