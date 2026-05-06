@@ -10,7 +10,7 @@ import com.sylvain.chess.play.Gameplay;
 import com.sylvain.chess.play.players.Player;
 import com.sylvain.chess.ui.players.GuiDummyPlayer;
 import com.sylvain.chess.ui.players.GuiInteractivePlayer;
-import com.sylvain.chess.ui.players.GuiMateSolver;
+import com.sylvain.chess.ui.players.GuiAlphaBetaPlayer;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
@@ -218,7 +218,7 @@ public class BoardFrame extends JFrame {
         this.game = this.getGame();
         this.currentBoard = this.game.getBoard().copy();
         this.currentBoard.printBoard();
-        this.players = this.getSelectedPlayers(this.game.getBoard());
+        this.players = this.getSelectedPlayers(this.game);
         for (final Player player : this.players) {
           if (player.getColor().equals(this.game.getHistory().getFirstPlayingColor())) {
             this.playersTurn = player;
@@ -276,18 +276,18 @@ public class BoardFrame extends JFrame {
     return null;
   }
 
-  private List<Player> getSelectedPlayers(final ChessBoard board) {
-    return List.of(this.getSelectedPlayer(board, PlayerColor.WHITE), this.getSelectedPlayer(board, PlayerColor.BLACK));
+  private List<Player> getSelectedPlayers(final Gameplay game) {
+    return List.of(this.getSelectedPlayer(game, PlayerColor.WHITE), this.getSelectedPlayer(game, PlayerColor.BLACK));
   }
 
-  private Player getSelectedPlayer(final ChessBoard board, final PlayerColor color) {
+  private Player getSelectedPlayer(final Gameplay game, final PlayerColor color) {
     final JComboBox<String> combo = color.equals(PlayerColor.WHITE) ? this.whitePlayerChoice : this.blackPlayerChoice;
     // TODO: parametrize player name and maxNumber of moves for solver
     return PUZZLE_SOLVER.equals(combo.getSelectedItem()) ?
-            new GuiMateSolver(color, board, this.getMaxNumberOfSemiMoves(), this) :
+            new GuiAlphaBetaPlayer(color, game, this.getMaxNumberOfSemiMoves(), this) :
             DUMMY_PLAYER.equals(combo.getSelectedItem()) ?
-                    new GuiDummyPlayer(color, board, this) :
-                    new GuiInteractivePlayer(color, "Human", board, BoardFrame.this);
+                    new GuiDummyPlayer(color, game.getBoard(), this) :
+                    new GuiInteractivePlayer(color, "Human", game.getBoard(), BoardFrame.this);
   }
 
   private int getMaxNumberOfSemiMoves() {
@@ -314,7 +314,7 @@ public class BoardFrame extends JFrame {
       this.movesTableModel.addRow(new Object[]{this.moveNumber, moveStr, "", timeDiff, ""});
     }
     else if (this.movesTableModel.getRowCount() == 0) {
-      this.movesTableModel.addRow(new Object[]{this.moveNumber, Move.NO_MOVE_STR, moveStr, "", timeDiff});
+      this.movesTableModel.addRow(new Object[]{this.moveNumber, Move.NO_WHITE_MOVE_STR, moveStr, "", timeDiff});
       this.moveNumber++;
     }
     else {
