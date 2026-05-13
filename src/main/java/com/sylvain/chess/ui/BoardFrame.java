@@ -28,9 +28,9 @@ public class BoardFrame extends JFrame {
   private static final int DEFAULT_SIZE = 600;
   private static final String FEN_MODE = "Load FEN description:";
   private static final String CHESS_960 = "Chess 960";
-  private static final String HUMAN_PLAYER = "Human player";
+  private static final String HUMAN_PLAYER = "Human";
   private static final String DUMMY_PLAYER = "Dummy";
-  private static final String PUZZLE_SOLVER = "Puzzle solver";
+  private static final String ALPHA_BETA_PLAYER = "Alpha-beta";
   public static final int DELAY_TO_REPAINT_BOARD_MS = 30;
   public static final int DEFAULT_SEMI_MOVES = 9;
 
@@ -75,8 +75,8 @@ public class BoardFrame extends JFrame {
 
     this.selectNewGameMode = new JComboBox<>(new String[]{"Classical game", CHESS_960, FEN_MODE});
     this.newGameTextField = new JTextField(25);
-    this.whitePlayerChoice = new JComboBox<>(new String[]{HUMAN_PLAYER, DUMMY_PLAYER, PUZZLE_SOLVER});
-    this.blackPlayerChoice = new JComboBox<>(new String[]{HUMAN_PLAYER, DUMMY_PLAYER, PUZZLE_SOLVER});
+    this.whitePlayerChoice = new JComboBox<>(new String[]{HUMAN_PLAYER, DUMMY_PLAYER, ALPHA_BETA_PLAYER});
+    this.blackPlayerChoice = new JComboBox<>(new String[]{HUMAN_PLAYER, DUMMY_PLAYER, ALPHA_BETA_PLAYER});
     this.boardPanel = new ChessBoardPanel(this);
 
     this.players = new ArrayList<>(2);
@@ -133,7 +133,7 @@ public class BoardFrame extends JFrame {
         return;
       final GuiInteractivePlayer nextPlayer = this.getNextInteractivePlayerToMove();
       if (nextPlayer != null)
-        nextPlayer.setMove(move);
+        nextPlayer.setNextMove(move);
       this.publishNextMove();
       this.moveField.setText("");
     });
@@ -283,7 +283,7 @@ public class BoardFrame extends JFrame {
   private Player getSelectedPlayer(final Gameplay game, final PlayerColor color) {
     final JComboBox<String> combo = color.equals(PlayerColor.WHITE) ? this.whitePlayerChoice : this.blackPlayerChoice;
     // TODO: parametrize player name and maxNumber of moves for solver
-    return PUZZLE_SOLVER.equals(combo.getSelectedItem()) ?
+    return ALPHA_BETA_PLAYER.equals(combo.getSelectedItem()) ?
             new GuiAlphaBetaPlayer(color, game, this.getMaxNumberOfSemiMoves(), this) :
             DUMMY_PLAYER.equals(combo.getSelectedItem()) ?
                     new GuiDummyPlayer(color, game.getBoard(), this) :
