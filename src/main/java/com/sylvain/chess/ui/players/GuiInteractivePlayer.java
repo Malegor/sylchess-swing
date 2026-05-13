@@ -21,7 +21,6 @@ import java.util.stream.Stream;
 
 public class GuiInteractivePlayer extends InteractivePlayer {
   private final BoardFrame frame;
-  @Setter
   private String move;
   private Square selectedOrigin;
   private Square selectedDestination;
@@ -100,5 +99,10 @@ public class GuiInteractivePlayer extends InteractivePlayer {
   public void setNextMoveSquares(final Square squareOrigin, final Square squareDestination) {
     this.selectedOrigin = squareOrigin;
     this.selectedDestination = squareDestination;
+  }
+
+  public void setNextMove(final String move) {
+    this.move = move;
+    this.setNextMoveSquares(null, null);
   }
 }
