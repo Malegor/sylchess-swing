@@ -26,8 +26,9 @@ import java.util.concurrent.CountDownLatch;
 @Log4j2
 public class BoardFrame extends JFrame {
   private static final int DEFAULT_SIZE = 600;
-  private static final String FEN_MODE = "Load FEN description:";
+  private static final String STANDARD_GAME = "Standard game";
   private static final String CHESS_960 = "Chess 960";
+  private static final String FEN_MODE = "Load FEN description:";
   private static final String HUMAN_PLAYER = "Human";
   private static final String DUMMY_PLAYER = "Dummy";
   private static final String ALPHA_BETA_PLAYER = "Alpha-beta";
@@ -73,7 +74,7 @@ public class BoardFrame extends JFrame {
     this.resultLabel = new JLabel();
     this.moveField = new JTextField(5);
 
-    this.selectNewGameMode = new JComboBox<>(new String[]{"Classical game", CHESS_960, FEN_MODE});
+    this.selectNewGameMode = new JComboBox<>(new String[]{STANDARD_GAME, CHESS_960, FEN_MODE});
     this.newGameTextField = new JTextField(25);
     this.whitePlayerChoice = new JComboBox<>(new String[]{HUMAN_PLAYER, DUMMY_PLAYER, ALPHA_BETA_PLAYER});
     this.blackPlayerChoice = new JComboBox<>(new String[]{HUMAN_PLAYER, DUMMY_PLAYER, ALPHA_BETA_PLAYER});
