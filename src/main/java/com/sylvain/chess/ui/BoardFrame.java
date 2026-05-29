@@ -216,7 +216,9 @@ public class BoardFrame extends JFrame {
     newGameButton.addActionListener(
       e -> {
         log.info("New Game");
-        this.game = this.getGame();
+        if (this.game != null)
+          this.game.abort();
+        this.game = this.getNewGame();
         this.currentBoard = this.game.getBoard().copy();
         this.currentBoard.printBoard();
         this.players = this.getSelectedPlayers(this.game);
@@ -254,7 +256,7 @@ public class BoardFrame extends JFrame {
     return newGameButton;
   }
 
-  private Gameplay getGame() {
+  private Gameplay getNewGame() {
     try {
       return FEN_MODE.equals(this.selectNewGameMode.getSelectedItem()) ? FenLoader.loadPosition(this.newGameTextField.getText())
               : CHESS_960.equals(this.selectNewGameMode.getSelectedItem()) ? new Gameplay(ChessBoard.get960Board(this.getSeed()))
@@ -288,7 +290,7 @@ public class BoardFrame extends JFrame {
             new GuiAlphaBetaPlayer(color, game, this.getMaxNumberOfSemiMoves(), this) :
             DUMMY_PLAYER.equals(combo.getSelectedItem()) ?
                     new GuiDummyPlayer(color, game.getBoard(), this) :
-                    new GuiInteractivePlayer(color, "Human", game.getBoard(), BoardFrame.this);
+                    new GuiInteractivePlayer(color, HUMAN_PLAYER, game.getBoard(), BoardFrame.this);
   }
 
   private int getMaxNumberOfSemiMoves() {
