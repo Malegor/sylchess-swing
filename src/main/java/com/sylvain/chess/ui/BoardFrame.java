@@ -215,7 +215,6 @@ public class BoardFrame extends JFrame {
     newGameButton.setText("New Game");
     newGameButton.addActionListener(
       e -> {
-        log.info("New Game");
         if (this.game != null)
           this.game.abort();
         this.game = this.getNewGame();
@@ -257,6 +256,7 @@ public class BoardFrame extends JFrame {
   }
 
   private Gameplay getNewGame() {
+    log.info("New Game");
     try {
       return FEN_MODE.equals(this.selectNewGameMode.getSelectedItem()) ? FenLoader.loadPosition(this.newGameTextField.getText())
               : CHESS_960.equals(this.selectNewGameMode.getSelectedItem()) ? new Gameplay(ChessBoard.get960Board(this.getSeed()))
