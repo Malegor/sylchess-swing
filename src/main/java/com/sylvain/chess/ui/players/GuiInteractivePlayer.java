@@ -105,4 +105,9 @@ public class GuiInteractivePlayer extends InteractivePlayer {
     this.move = move;
     this.setNextMoveSquares(null, null);
   }
+
+  @Override
+  public void abortCalculations() {
+    // TODO: ?? this.frame.publishNextMove();
+  }
 }
