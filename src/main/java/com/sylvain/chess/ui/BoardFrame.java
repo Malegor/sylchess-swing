@@ -259,8 +259,10 @@ public class BoardFrame extends JFrame {
     log.info("New Game");
     try {
       return FEN_MODE.equals(this.selectNewGameMode.getSelectedItem()) ? FenLoader.loadPosition(this.newGameTextField.getText())
-              : CHESS_960.equals(this.selectNewGameMode.getSelectedItem()) ? new Gameplay(ChessBoard.get960Board(this.getSeed()))
-              : new Gameplay(ChessBoard.defaultBoard());
+              : CHESS_960.equals(this.selectNewGameMode.getSelectedItem()) ?
+                (this.is960ByIndex() ? new Gameplay(ChessBoard.get960BoardByIndex(this.get960Index()))
+                : new Gameplay(ChessBoard.get960Board(this.get960Seed())))
+                  : new Gameplay(ChessBoard.defaultBoard());
     }
     catch (final IllegalArgumentException ex) {
       this.warningsLabel.setText(ex.getMessage());
@@ -268,7 +270,11 @@ public class BoardFrame extends JFrame {
     }
   }
 
-  private Long getSeed() {
+  private boolean is960ByIndex() {
+    return this.newGameTextField.getText().trim().startsWith("n");
+  }
+
+  private Long get960Seed() {
     final String text = this.newGameTextField.getText().trim();
     try {
       return Long.parseLong(text);
@@ -277,6 +283,17 @@ public class BoardFrame extends JFrame {
         log.warn("Invalid format: \"{}\"", text);
     }
     return null;
+  }
+
+  private int get960Index() {
+    final String text = this.newGameTextField.getText().trim().substring(1);
+    try {
+      return Integer.parseInt(text);
+    } catch (NumberFormatException e) {
+      if (!text.isEmpty())
+        log.warn("Invalid format: \"{}\"", text);
+    }
+    return -1;
   }
 
   private List<Player> getSelectedPlayers(final Gameplay game) {
