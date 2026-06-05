@@ -261,7 +261,7 @@ public class BoardFrame extends JFrame {
       return FEN_MODE.equals(this.selectNewGameMode.getSelectedItem()) ? FenLoader.loadPosition(this.newGameTextField.getText())
               : CHESS_960.equals(this.selectNewGameMode.getSelectedItem()) ?
                 (this.is960ByIndex() ? new Gameplay(ChessBoard.get960BoardByIndex(this.get960Index()))
-                : new Gameplay(ChessBoard.get960Board(this.get960Seed())))
+                : new Gameplay(ChessBoard.get960BoardBySeed(this.get960Seed())))
                   : new Gameplay(ChessBoard.defaultBoard());
     }
     catch (final IllegalArgumentException ex) {
