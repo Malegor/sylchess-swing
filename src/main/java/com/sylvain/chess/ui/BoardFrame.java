@@ -159,7 +159,7 @@ public class BoardFrame extends JFrame {
       if (this.game == null)
         return;
       final JTextArea fenText = new JTextArea(1, 40);
-      fenText.setText(FenSaver.getPositionString(this.game));
+      fenText.setText(FenSaver.getPositionString(this.game.getInfo(), this.currentBoard));
       fenText.setEditable(false);
       fenText.setLineWrap(true);
       fenText.setWrapStyleWord(true);
