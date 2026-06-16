@@ -166,7 +166,7 @@ public class BoardFrame extends JFrame {
       final JScrollPane fenPane = new JScrollPane(fenText);
 
       final JTextArea pgnText = new JTextArea(20, 40);
-      pgnText.setText(PgnSaver.saveGame(this.game));
+      pgnText.setText(PgnSaver.saveGame(this.game, this.currentBoard));
       pgnText.setEditable(false);
       pgnText.setLineWrap(true);
       pgnText.setWrapStyleWord(true);
