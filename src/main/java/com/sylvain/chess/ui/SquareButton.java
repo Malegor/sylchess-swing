@@ -36,6 +36,8 @@ public class SquareButton extends JButton implements MouseListener {
     this.row = row;
     this.boardPanel = chessBoardPanel;
     this.setBackground(this.getDefaultColor());
+    this.setOpaque(true); // for macOS
+    this.setBorderPainted(false); // for macOS
     this.addMouseListener(this);
   }
 
