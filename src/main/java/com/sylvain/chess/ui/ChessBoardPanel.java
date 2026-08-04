@@ -4,7 +4,7 @@ import com.sylvain.chess.board.ChessBoard;
 import com.sylvain.chess.board.Square;
 import com.sylvain.chess.moves.Move;
 import com.sylvain.chess.pieces.PieceOnBoard;
-import com.sylvain.chess.ui.players.GuiInteractivePlayer;
+import com.sylvain.chess.ui.players.BoardFrameInteractivePlayer;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
@@ -98,7 +98,7 @@ public class ChessBoardPanel extends JPanel {
   }
 
   public void prepareMove(final SquareButton selectedSquareButton) {
-    final GuiInteractivePlayer playerToMove = this.frame.getNextInteractivePlayerToMove();
+    final BoardFrameInteractivePlayer playerToMove = this.frame.getNextInteractivePlayerToMove();
     if (playerToMove == null)
       return;
     if (selectedSquareButton == null || selectedSquareButton.equals(this.selectedOrigin)) {

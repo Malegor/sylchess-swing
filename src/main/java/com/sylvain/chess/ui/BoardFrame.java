@@ -9,9 +9,10 @@ import com.sylvain.chess.moves.Move;
 import com.sylvain.chess.play.Gameplay;
 import com.sylvain.chess.play.players.Player;
 import com.sylvain.chess.ui.players.GuiDummyPlayer;
-import com.sylvain.chess.ui.players.GuiInteractivePlayer;
+import com.sylvain.chess.ui.players.BoardFrameInteractivePlayer;
 import com.sylvain.chess.ui.players.GuiAlphaBetaPlayer;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 import javax.swing.*;
@@ -52,7 +53,7 @@ public class BoardFrame extends JFrame {
   private List<Player> players;
   private Player playersTurn;
   private int moveNumber;
-  @Getter
+  @Getter @Setter
   private CountDownLatch waitingForNextMove;
   @Getter
   private ChessBoard currentBoard;
@@ -81,7 +82,6 @@ public class BoardFrame extends JFrame {
     this.boardPanel = new ChessBoardPanel(this);
 
     this.players = new ArrayList<>(2);
-    this.waitForNextMove();
     this.add(this.boardPanel);
     this.add(this.getInteractivePanel());
     this.setVisible(true);
@@ -132,7 +132,7 @@ public class BoardFrame extends JFrame {
       final String move = this.moveField.getText();
       if (move.isEmpty())
         return;
-      final GuiInteractivePlayer nextPlayer = this.getNextInteractivePlayerToMove();
+      final BoardFrameInteractivePlayer nextPlayer = this.getNextInteractivePlayerToMove();
       if (nextPlayer != null)
         nextPlayer.setNextMove(move);
       this.publishNextMove();
@@ -191,9 +191,9 @@ public class BoardFrame extends JFrame {
     return exportFenButton;
   }
 
-  public GuiInteractivePlayer getNextInteractivePlayerToMove() {
-    final List<GuiInteractivePlayer> guiInteractivePlayers = this.players.stream().filter(GuiInteractivePlayer.class::isInstance).map(GuiInteractivePlayer.class::cast).toList();
-    return guiInteractivePlayers.size() > 1 ? (GuiInteractivePlayer) this.playersTurn : guiInteractivePlayers.isEmpty() ? null : guiInteractivePlayers.getFirst();
+  public BoardFrameInteractivePlayer getNextInteractivePlayerToMove() {
+    final List<BoardFrameInteractivePlayer> boardFrameInteractivePlayers = this.players.stream().filter(BoardFrameInteractivePlayer.class::isInstance).map(BoardFrameInteractivePlayer.class::cast).toList();
+    return boardFrameInteractivePlayers.size() > 1 ? (BoardFrameInteractivePlayer) this.playersTurn : boardFrameInteractivePlayers.isEmpty() ? null : boardFrameInteractivePlayers.getFirst();
   }
 
   private JPanel getNewGamePanel() {
@@ -234,7 +234,6 @@ public class BoardFrame extends JFrame {
         this.resultLabel.setText(" ");
         BoardFrame.this.clearMovesTable();
         this.warningsLabel.setText(" ");
-        this.waitForNextMove();
         this.moveNumber = game.getInfo().getMoveNumber();
         this.movesTableModel.setColumnIdentifiers(new Object[]{this.movesTableModel.getColumnName(0), this.players.getFirst(), this.players.getLast(),
                 this.movesTableModel.getColumnName(3), this.movesTableModel.getColumnName(4)});
@@ -307,7 +306,7 @@ public class BoardFrame extends JFrame {
             new GuiAlphaBetaPlayer(color, game, this.getMaxNumberOfSemiMoves(), this) :
             DUMMY_PLAYER.equals(combo.getSelectedItem()) ?
                     new GuiDummyPlayer(color, game.getBoard(), this) :
-                    new GuiInteractivePlayer(color, HUMAN_PLAYER, game.getBoard(), BoardFrame.this);
+                    new BoardFrameInteractivePlayer(color, HUMAN_PLAYER, game.getBoard(), BoardFrame.this);
   }
 
   private int getMaxNumberOfSemiMoves() {
@@ -358,10 +357,6 @@ public class BoardFrame extends JFrame {
     timer.setRepeats(false);
     timer.start();
     this.timeInMs = System.currentTimeMillis();
-  }
-
-  public void waitForNextMove() {
-    this.waitingForNextMove = new CountDownLatch(1);
   }
 
   public void publishNextMove() {
